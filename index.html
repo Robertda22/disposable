@@ -217,11 +217,8 @@
     <div class="dash-banner" id="dash-banner" hidden></div>
     <div class="screen-pad">
       <div class="dash-head">
-        <div>
-          <p class="eyebrow dim">LIVE DASHBOARD</p>
-          <h2 class="h2" id="dash-name">—</h2>
-        </div>
-        <span class="chip" id="dash-chip">LIVE</span>
+        <h2 class="h2" id="dash-name">—</h2>
+        <p class="dash-status"><span class="status-dot"></span><span id="dash-chip">ONGOING</span></p>
       </div>
 
       <div class="stat">
@@ -242,11 +239,11 @@
       <div id="request-slot"></div>
 
       <div class="dash-actions">
-        <button class="btn ghost wide" id="btn-host-cam">Take photos too</button>
-        <button class="btn ghost wide" id="btn-review">Review moments</button>
-        <button class="btn flash wide" id="btn-reveal">Reveal album ✱</button>
+        <button class="dash-action" id="btn-host-cam"><span class="dash-action-icon">□</span><span>Take photos</span></button>
+        <button class="dash-action" id="btn-review"><span class="dash-action-icon">▧</span><span>Review moments</span></button>
+        <button class="dash-action reveal" id="btn-reveal"><span class="dash-action-icon">✱</span><span>Reveal album</span></button>
       </div>
-      <button class="linkish" id="btn-reshare">↖ Show QR &amp; link again</button>
+      <button class="dash-invite-link" id="btn-reshare">Invite / QR</button>
     </div>
   </section>
 

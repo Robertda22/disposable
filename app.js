@@ -809,6 +809,15 @@ function renderDash() {
   const e = S.event;
   if (!e) { go("s-host-create"); return; }
   $("#dash-name").textContent = e.name;
+  const cover = (e.invite && e.invite.cover) || e.cover;
+  const banner = $("#dash-banner");
+  if (cover) {
+    banner.style.backgroundImage = `url(${cover})`;
+    banner.hidden = false;
+  } else {
+    banner.style.backgroundImage = "";
+    banner.hidden = true;
+  }
   renderStats();
   renderRequests();
 }
@@ -834,6 +843,7 @@ function renderStats() {
 
   const chip = $("#dash-chip");
   chip.textContent = { upcoming: "UPCOMING", live: "ONGOING", ended: "DEVELOPING", revealed: "REVEALED" }[phase];
+  chip.parentElement?.classList.toggle("is-live", phase === "live");
 
   const label = $("#st-clock-label"), clock = $("#st-clock");
   if (phase === "upcoming") {
@@ -874,31 +884,33 @@ function renderRequests() {
   const reqs = [];
   if (S.simRequest) reqs.push({ ...S.simRequest, kind: "sim" });
   if (S.request) reqs.push({ ...S.request, kind: "real" });
-  for (const rq of reqs) {
-    const full = S.guests.length >= S.event.max;
-    const card = el("div", "request-card");
+  if (!reqs.length) return;
 
-    const p = el("p");
-    p.appendChild(el("b", "", rq.name));
-    p.appendChild(document.createTextNode(" wants to join your event."));
-    card.appendChild(p);
+  const rq = reqs[0];
+  const full = S.guests.length >= S.event.max;
+  const wrap = el("div", "request-stack" + (reqs.length > 1 ? " has-more" : ""));
+  const card = el("div", "request-card");
 
-    const row = el("div", "rq-row");
-    const acc = el("button", "btn flash sm", "Accept");
-    const dec = el("button", "btn ghost sm", "Decline");
-    acc.addEventListener("click", () => acceptRequest(rq.kind));
-    dec.addEventListener("click", () => {
-      if (rq.kind === "sim") S.simRequest = null;
-      else { S.request = null; S.you.requested = false; }
-      save();
-      renderRequests();
-    });
-    row.append(acc, dec);
-    card.appendChild(row);
+  const avatar = el("span", "rq-avatar", rq.name.slice(0, 1).toUpperCase());
+  const copy = el("p", "rq-copy");
+  copy.appendChild(el("b", "", rq.name));
+  copy.appendChild(el("span", "", "wants to join your event"));
 
-    if (full) card.appendChild(el("p", "rq-note", "EVENT FULL — ACCEPTING OFFERS AN UPGRADE: +10 GUESTS · 19 SEK"));
-    slot.appendChild(card);
-  }
+  const acc = el("button", "rq-accept", "Accept");
+  const dec = el("button", "rq-decline", "×");
+  acc.addEventListener("click", () => acceptRequest(rq.kind));
+  dec.addEventListener("click", () => {
+    if (rq.kind === "sim") S.simRequest = null;
+    else { S.request = null; S.you.requested = false; }
+    save();
+    renderRequests();
+  });
+
+  card.append(avatar, copy, acc, dec);
+  if (full) card.appendChild(el("p", "rq-note", "EVENT FULL — ACCEPTING OFFERS AN UPGRADE: +10 GUESTS · 19 SEK"));
+  wrap.appendChild(card);
+  if (reqs.length > 1) wrap.appendChild(el("p", "rq-more", `View all requests (${reqs.length})`));
+  slot.appendChild(wrap);
 }
 
 function acceptRequest(kind) {
