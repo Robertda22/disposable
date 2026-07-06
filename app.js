@@ -744,6 +744,25 @@ function scaleImageToDataURL(file, maxDim, cb) {
 }
 
 function bindShare() {
+  const link = () => "https://dsp.app/e/" + ((S.event && S.event.code) || "");
+  $("#btn-copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(link()); toast("LINK COPIED ✓"); }
+    catch { toast(link()); }
+  });
+  $("#btn-share").addEventListener("click", async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: (S.event && S.event.name) || "Disposable event", url: link() }); return; } catch {}
+    }
+    try { await navigator.clipboard.writeText(link()); toast("LINK COPIED ✓"); }
+    catch { toast(link()); }
+  });
+  $("#btn-dlcard").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.download = "invite-" + (((S.event && S.event.code) || "card")) + ".png";
+    a.href = $("#invite-canvas").toDataURL("image/png");
+    a.click();
+    toast("INVITE DOWNLOADED ✓");
+  });
   const closeEdit = () => { save(); $("#invite-edit").hidden = true; $("#font-menu").hidden = true; };
   $("#btn-customize").addEventListener("click", () => {
     syncInviteControls();
@@ -1564,11 +1583,13 @@ function updateCamera() {
     lock.hidden = true;
     startCam();
     $("#btn-shutter").disabled = left <= 0;
+    $("#btn-upload").disabled = left <= 0;
   } else {
     stopCam();
     lock.hidden = false;
     cta.hidden = true;
     $("#btn-shutter").disabled = true;
+    $("#btn-upload").disabled = true;
     if (phase === "upcoming") {
       $("#vf-lock-title").textContent = "Camera locked";
       $("#vf-lock-sub").textContent = `THE EVENT HASN’T STARTED — OPENS IN ${fmtCountdown(e.start - Date.now())}`;
@@ -1670,6 +1691,20 @@ function takePhoto() {
   }, 120);
 }
 
+function uploadPhotoFile(file) {
+  if (!file || eventPhase() !== "live" || recording) return;
+  if (EXPOSURES - myMoments().length <= 0) { toast("FILM FULL"); return; }
+  const img = new Image();
+  img.onload = () => {
+    const ts = Date.now();
+    const frame = captureRaw(img, img.width, img.height, 840, 1120, false, 0.82);
+    addMoment({ id: uid(), guestId: "you", name: whoName(), kind: "photo", ts, frames: [frame], removed: false });
+    toast("PHOTO ADDED TO FILM ✓");
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(file);
+}
+
 const CLIP_MS = 3000;   // up to 3 seconds
 const CLIP_STEP = 220;  // grab a frame this often
 const CLIP_MAX = 16;    // hard cap on captured frames
@@ -1724,6 +1759,14 @@ function bindCamera() {
     if (eventPhase() !== "live") return;
     if (camMode === "photo") takePhoto();
     else toggleVideo();
+  });
+  $("#btn-upload").addEventListener("click", () => {
+    if (eventPhase() === "live") $("#in-upload").click();
+  });
+  $("#in-upload").addEventListener("change", (e) => {
+    const f = e.target.files[0];
+    e.target.value = "";
+    uploadPhotoFile(f);
   });
   $("#btn-flash").addEventListener("click", toggleFlash);
   $("#btn-flip").addEventListener("click", flipCam);
