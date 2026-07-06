@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F3EE" />
+<title>Disposable — one camera, every guest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..900&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="chrome">
+  <span class="chrome-logo">DISPOSABLE<i class="ast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5v17M4.2 7.2l15.6 9.6M19.8 7.2 4.2 16.8"/></svg></i></span>
+  <nav class="chrome-toggle" id="role-toggle">
+    <button data-role="host">HOST</button>
+    <button data-role="guest">GUEST</button>
+  </nav>
+  <button class="chrome-reset" id="btn-reset" title="Reset demo">RESET</button>
+</header>
+
+<main id="stage">
+
+  <!-- ============ SPLASH ============ -->
+  <section class="screen light" id="s-splash">
+    <div class="splash-body">
+      <h1 class="wordmark">Disposable<i class="ast big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5v17M4.2 7.2l15.6 9.6M19.8 7.2 4.2 16.8"/></svg></i></h1>
+      <p class="splash-tag">One camera. Every guest.<br/>Nothing revealed until the end.</p>
+      <div class="splash-film" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="splash-actions">
+        <button class="btn solid" data-go-role="host">Host an event</button>
+        <button class="btn outline" data-go-role="guest">Join as a guest</button>
+      </div>
+      <p class="micro center">SCAN → SHOOT → WAIT FOR THE REVEAL · NO APP NEEDED</p>
+    </div>
+  </section>
+
+  <!-- ============ HOST · CREATE ============ -->
+  <section class="screen light" id="s-host-create">
+    <div class="screen-pad">
+      <p class="eyebrow">NEW EVENT · STEP 1 OF 4</p>
+      <h1 class="h1">Create your<br/><em>event</em></h1>
+
+      <form id="form-create" novalidate>
+        <label class="field">
+          <span class="field-label">EVENT NAME</span>
+          <input type="text" id="in-name" placeholder="Elsa &amp; Hugo’s Wedding" maxlength="48" required />
+        </label>
+
+        <label class="field field-cover" id="cover-field">
+          <span class="field-label">COVER · OPTIONAL</span>
+          <input type="file" id="in-cover" accept="image/*" hidden />
+          <span class="cover-drop" id="cover-drop">＋ Add a cover photo</span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">DATE</span>
+          <input type="date" id="in-date" required />
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">STARTS</span>
+            <input type="time" id="in-start" required />
+          </label>
+          <label class="field">
+            <span class="field-label">ENDS</span>
+            <input type="time" id="in-end" required />
+          </label>
+        </div>
+        <p class="hint" id="overnight-hint" hidden>Ends after midnight — carries to the next day.</p>
+
+        <button class="btn solid wide" type="submit">Continue →</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ HOST · ALBUM UNLOCK ============ -->
+  <section class="screen light" id="s-host-unlock">
+    <div class="screen-pad">
+      <button class="back" data-back="s-host-create">←</button>
+      <p class="eyebrow">THE REVEAL · STEP 2 OF 4</p>
+      <h1 class="h1">When does the<br/><em>album open?</em></h1>
+      <p class="sub">Nobody sees a single photo until this moment.</p>
+
+      <div class="radio-cards" id="unlock-cards">
+        <label class="radio-card">
+          <input type="radio" name="unlock" value="end" checked />
+          <span class="rc-title">When the event ends</span>
+          <span class="rc-sub">Automatic reveal at the end time</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="unlock" value="time" />
+          <span class="rc-title">At a chosen time</span>
+          <span class="rc-sub">Pick the exact reveal moment</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="unlock" value="manual" />
+          <span class="rc-title">When I decide</span>
+          <span class="rc-sub">You press reveal, whenever feels right</span>
+        </label>
+      </div>
+      <label class="field" id="reveal-time-field" hidden>
+        <span class="field-label">REVEAL AT</span>
+        <input type="datetime-local" id="in-revealat" />
+      </label>
+
+      <button class="btn solid wide" id="btn-unlock-continue">Choose guest package →</button>
+    </div>
+  </section>
+
+  <!-- ============ HOST · PACKAGE ============ -->
+  <section class="screen light" id="s-host-package">
+    <div class="screen-pad">
+      <button class="back" data-back="s-host-unlock">←</button>
+      <p class="eyebrow">GUEST PACKAGE · STEP 3 OF 4</p>
+      <h1 class="h1">How many<br/><em>guests?</em></h1>
+
+      <div class="pkg-list" id="pkg-list">
+        <label class="pkg"><input type="radio" name="pkg" value="free" checked />
+          <span class="pkg-name">Free</span><span class="pkg-guests">up to 10 guests</span><span class="pkg-price">0 SEK</span>
+        </label>
+        <label class="pkg"><input type="radio" name="pkg" value="starter" />
+          <span class="pkg-name">Starter</span><span class="pkg-guests">up to 20 guests</span><span class="pkg-price">49 SEK</span>
+        </label>
+        <label class="pkg"><input type="radio" name="pkg" value="standard" />
+          <span class="pkg-name">Standard</span><span class="pkg-guests">up to 50 guests</span><span class="pkg-price">99 SEK</span>
+        </label>
+        <label class="pkg"><input type="radio" name="pkg" value="premium" />
+          <span class="pkg-name">Premium</span><span class="pkg-guests">up to 100 guests</span><span class="pkg-price">199 SEK</span>
+        </label>
+      </div>
+
+      <p class="micro">NEED MORE LATER? +10 GUESTS FOR 19 SEK — UPGRADE ANYTIME.</p>
+      <button class="btn solid wide" id="btn-pkg-continue">Create event — free</button>
+    </div>
+  </section>
+
+  <!-- ============ HOST · SHARE ============ -->
+  <section class="screen light" id="s-host-share">
+    <div class="screen-pad">
+      <p class="eyebrow">STEP 4 OF 4 · YOUR INVITE</p>
+      <h1 class="h1">Your<br/><em>invite</em></h1>
+      <p class="sub">This is what guests see when you share the event.</p>
+
+      <div class="invite-preview big">
+        <canvas id="invite-canvas" width="1080" height="1440"></canvas>
+      </div>
+
+      <button class="btn outline wide" id="btn-customize">✦ Customize design</button>
+      <button class="btn solid wide" id="btn-open-dash">Open live dashboard →</button>
+
+      <canvas id="qr-canvas" width="290" height="290" hidden></canvas>
+    </div>
+
+    <!-- customize sheet -->
+    <div class="edit-sheet" id="invite-edit" hidden>
+      <div class="es-backdrop" id="es-backdrop"></div>
+      <div class="es-panel">
+        <div class="es-head">
+          <p class="eyebrow">CUSTOMIZE INVITE</p>
+          <button class="lb-btn" id="es-done" aria-label="Done">✕</button>
+        </div>
+        <label class="inv-cover" for="up-cover">
+          <input type="file" id="up-cover" accept="image/*" hidden />
+          <span id="cover-label">Change cover photo</span>
+        </label>
+        <div class="es-row">
+          <button class="color-btn" id="open-color"><i class="color-dot" id="color-dot"></i>Colour</button>
+          <div class="dropdown" id="font-dd">
+            <button class="dd-btn" id="font-dd-btn">Aa&nbsp; <span id="font-current">Modern</span> <i>▾</i></button>
+            <div class="dd-menu" id="font-menu" hidden>
+              <button data-font="grotesk">Modern</button>
+              <button data-font="serif">Classic</button>
+              <button data-font="mono">Mono</button>
+            </div>
+          </div>
+          <button class="inv-toggle on" id="tg-qr">QR ✓</button>
+        </div>
+        <div class="es-actions">
+          <button class="inv-clear" id="inv-clear">Reset</button>
+          <button class="btn solid es-apply" id="es-apply">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- photoshop-style colour picker -->
+    <div class="color-pop" id="color-pop" hidden>
+      <div class="cp-backdrop" id="cp-backdrop"></div>
+      <div class="cp-panel">
+        <p class="eyebrow">PICK A COLOUR</p>
+        <div class="cp-sv" id="cp-sv">
+          <div class="cp-sv-white"></div>
+          <div class="cp-sv-black"></div>
+          <div class="cp-cursor" id="cp-cursor"></div>
+        </div>
+        <div class="cp-hue" id="cp-hue"><div class="cp-hue-thumb" id="cp-hue-thumb"></div></div>
+        <div class="cp-foot">
+          <span class="cp-preview" id="cp-preview"></span>
+          <span class="cp-hex" id="cp-hex">#E5352B</span>
+          <button class="btn solid sm" id="cp-done">Done</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOST · DASHBOARD (darkroom) ============ -->
+  <section class="screen dark" id="s-host-dash">
+    <div class="dash-banner" id="dash-banner" hidden></div>
+    <div class="screen-pad">
+      <div class="dash-head">
+        <div>
+          <p class="eyebrow dim">LIVE DASHBOARD</p>
+          <h2 class="h2" id="dash-name">—</h2>
+        </div>
+        <span class="chip" id="dash-chip">LIVE</span>
+      </div>
+
+      <div class="stat">
+        <p class="stat-label">GUESTS JOINED</p>
+        <p class="stat-num"><span id="st-guests">0</span><span class="stat-den" id="st-max">/50</span></p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">MOMENTS CAPTURED</p>
+        <p class="stat-num" id="st-moments">0</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label" id="st-clock-label">TIME REMAINING</p>
+        <p class="stat-num mono-num" id="st-clock">—</p>
+      </div>
+
+      <div class="develop-note"><span class="pulse"></span>Film is developing — photos stay hidden until the reveal.</div>
+
+      <div id="request-slot"></div>
+
+      <div class="dash-actions">
+        <button class="btn ghost wide" id="btn-host-cam">Take photos too</button>
+        <button class="btn ghost wide" id="btn-review">Review moments</button>
+        <button class="btn flash wide" id="btn-reveal">Reveal album ✱</button>
+      </div>
+      <button class="linkish" id="btn-reshare">↖ Show QR &amp; link again</button>
+    </div>
+  </section>
+
+  <!-- ============ HOST · REVIEW (iOS-style select) ============ -->
+  <section class="screen light" id="s-host-review">
+    <div class="review-scroll">
+      <div class="screen-pad">
+        <div class="review-top">
+          <button class="back" data-back="s-host-dash">←</button>
+          <button class="review-select" id="btn-review-select">Select</button>
+        </div>
+        <p class="eyebrow">REVIEW MODE · HOST ONLY</p>
+        <h1 class="h1" id="review-title">Review<br/><em>moments</em></h1>
+        <p class="sub" id="review-count">0 moments</p>
+        <p class="micro" id="review-hint">GUESTS STILL CAN’T SEE ANY OF THIS. TAP A PHOTO TO OPEN, OR “SELECT” TO CHOOSE MANY.</p>
+        <div class="review-grid" id="review-grid"></div>
+        <button class="btn flash wide" id="btn-reveal-2">Reveal album ✱</button>
+      </div>
+    </div>
+
+    <!-- iOS-style selection action bar -->
+    <div class="select-bar" id="select-bar" hidden>
+      <button class="sel-act" id="act-fav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20s-7-4.6-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.4 12 20 12 20Z"/></svg>
+        <span>Favourite</span>
+      </button>
+      <button class="sel-act" id="act-keep">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m5 12 5 5 9-11"/></svg>
+        <span>Keep</span>
+      </button>
+      <button class="sel-act danger" id="act-remove">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13"/></svg>
+        <span>Remove</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ GUEST · GATE ============ -->
+  <section class="screen light" id="s-guest-gate">
+    <div class="screen-pad centered">
+      <p class="big-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5v17M4.2 7.2l15.6 9.6M19.8 7.2 4.2 16.8"/></svg></p>
+      <h1 class="h1 center">No event<br/><em>yet</em></h1>
+      <p class="sub center">Ask your host for their QR code or link —<br/>or create an event yourself.</p>
+      <button class="btn solid" data-go-role="host">Create an event</button>
+    </div>
+  </section>
+
+  <!-- ============ GUEST · JOIN ============ -->
+  <section class="screen light" id="s-guest-join">
+    <div class="screen-pad">
+      <div class="event-card" id="join-card">
+        <div class="event-card-cover" id="join-cover"></div>
+        <p class="event-card-name" id="join-name">—</p>
+        <p class="event-card-date mono" id="join-date">—</p>
+      </div>
+      <h1 class="h1">Join the<br/><em>event</em></h1>
+      <form id="form-join" novalidate>
+        <label class="field">
+          <span class="field-label">YOUR NAME</span>
+          <input type="text" id="jn-name" placeholder="Emma Lind" maxlength="40" required />
+        </label>
+        <label class="field">
+          <span class="field-label">EMAIL OR PHONE</span>
+          <input type="text" id="jn-contact" placeholder="emma@mail.com · 070-123 45 67" maxlength="60" required />
+        </label>
+        <p class="micro">NO APP. NO ACCOUNT. ONLY USED TO SEND YOU THE ALBUM.</p>
+        <button class="btn solid wide" type="submit">Open the camera →</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ GUEST · FULL ============ -->
+  <section class="screen light" id="s-guest-full">
+    <div class="screen-pad centered">
+      <p class="big-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></p>
+      <h1 class="h1 center">This event is<br/><em>currently full</em></h1>
+      <p class="sub center">The host can make room for you.</p>
+      <button class="btn solid" id="btn-request">Request access</button>
+    </div>
+  </section>
+
+  <!-- ============ GUEST · MAIN (darkroom) ============ -->
+  <section class="screen dark" id="s-guest-main">
+
+    <!-- CAMERA fills the screen -->
+    <div class="cam-stage" id="cam-stage">
+      <div class="viewfinder" id="viewfinder">
+        <video id="cam" playsinline muted autoplay></video>
+        <canvas id="cam-demo"></canvas>
+        <div class="vf-tone"></div>
+        <div class="vf-grain"></div>
+        <div class="vf-vignette"></div>
+
+        <div class="vf-top">
+          <span class="vf-event">
+            <button class="vf-back" id="vf-back" aria-label="Back to dashboard" hidden>←</button>
+            <i class="vf-dot"></i><span id="gm-name">—</span>
+          </span>
+          <span class="vf-tools">
+            <button class="vf-tool on" id="btn-flash" title="Flash" aria-pressed="true">
+              <svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg>
+            </button>
+            <button class="vf-tool" id="btn-flip" title="Flip camera">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 9a8 8 0 0 0-14-3M4 15a8 8 0 0 0 14 3"/><path d="M4 4v4h4M20 20v-4h-4"/></svg>
+            </button>
+          </span>
+        </div>
+
+        <div class="vf-rec" id="vf-rec" hidden><span></span>REC</div>
+        <div class="vf-stamp" id="vf-stamp">'26 07 02 12:00</div>
+
+        <div class="vf-lock" id="vf-lock" hidden>
+          <p class="vf-lock-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5v17M4.2 7.2l15.6 9.6M19.8 7.2 4.2 16.8"/></svg></p>
+          <p class="vf-lock-title" id="vf-lock-title">Camera locked</p>
+          <p class="vf-lock-sub" id="vf-lock-sub">—</p>
+          <button class="btn solid sm vf-lock-cta" id="vf-lock-cta" hidden>Open the album</button>
+        </div>
+      </div>
+
+      <div class="cam-modes" id="cam-modes">
+        <button data-mode="photo" class="on">Photo</button>
+        <button data-mode="video">Video</button>
+      </div>
+
+      <div class="cam-controls">
+        <button class="cam-thumb" id="cam-thumb" title="My moments"></button>
+        <button class="shutter" id="btn-shutter" aria-label="Capture">
+          <svg class="shutter-prog" viewBox="0 0 88 88">
+            <circle class="track" cx="44" cy="44" r="41"></circle>
+            <circle class="bar" cx="44" cy="44" r="41"></circle>
+          </svg>
+          <span class="shutter-core"></span>
+        </button>
+        <div class="film-counter" id="film-counter" title="Exposures left">
+          <div class="reel" id="film-reel">
+            <span class="r-prev" id="r-prev">25</span>
+            <span class="r-cur" id="hud-exp">24</span>
+            <span class="r-next" id="r-next">23</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="pull-tab" id="pull-tab" aria-label="Show moments and event">
+        <span class="pull-arrow">⌃</span>
+        <span class="pull-label">Moments &amp; Event</span>
+      </button>
+    </div>
+
+    <!-- MOMENTS / EVENT slide up over the camera — two switchable pages -->
+    <div class="gallery-sheet" id="gallery-sheet">
+      <nav class="gnav" id="gnav">
+        <button class="gnav-tab on" data-page="moments">Moments</button>
+        <button class="gnav-cam" id="gnav-cam" aria-label="Back to camera">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M4 8.5h3l1.4-2h7.2L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1Z"/>
+            <circle cx="12" cy="13" r="3.2"/>
+          </svg>
+        </button>
+        <button class="gnav-tab" data-page="event">Event</button>
+      </nav>
+
+      <div class="gallery-scroll">
+        <div class="gpage" id="gpage-moments">
+          <h2 class="h2">My moments</h2>
+          <p class="micro" id="mm-note">ONLY YOU CAN SEE THESE UNTIL THE REVEAL.</p>
+          <div class="mm-grid" id="mm-grid"></div>
+        </div>
+
+        <div class="gpage" id="gpage-event" hidden>
+          <p class="eyebrow dim">LIVE EVENT</p>
+          <div class="stat">
+            <p class="stat-label">GUESTS</p>
+            <p class="stat-num" id="ge-guests">0</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label">MOMENTS</p>
+            <p class="stat-num" id="ge-moments">0</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label" id="ge-clock-label">REVEAL IN</p>
+            <p class="stat-num mono-num" id="ge-clock">—</p>
+          </div>
+          <div class="develop-note"><span class="pulse"></span>Everyone’s capturing. No one’s peeking.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ALBUM (shared) ============ -->
+  <section class="screen light" id="s-album">
+    <div class="screen-pad slim">
+      <div class="album-head">
+        <div>
+          <p class="eyebrow">THE ALBUM</p>
+          <h1 class="h2" id="al-name">—</h1>
+          <p class="micro" id="al-sub">—</p>
+        </div>
+        <span class="chip flash-chip">REVEALED ✱</span>
+      </div>
+      <div class="album-bar">
+        <div class="pills" id="al-scope">
+          <button data-scope="all" class="on">All moments</button>
+          <button data-scope="mine">My moments</button>
+        </div>
+        <div class="pills" id="al-view">
+          <button data-view="feed" class="on" title="Feed">☰</button>
+          <button data-view="grid" title="Grid">▦</button>
+        </div>
+      </div>
+      <button class="btn solid wide" id="btn-recap" hidden>✦ Create recap film</button>
+      <div class="album-list" id="album-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ RECAP (host: post-event summary film) ============ -->
+  <div class="recap" id="recap" hidden>
+    <div class="recap-stage" id="recap-stage"></div>
+    <div class="recap-card" id="recap-card"></div>
+    <div class="recap-progress" id="recap-progress" hidden><i id="recap-bar"></i></div>
+    <div class="recap-top">
+      <button class="lb-btn" id="recap-close" aria-label="Close">✕</button>
+      <span class="recap-label">RECAP FILM</span>
+      <button class="lb-btn" id="recap-mute" aria-label="Mute">♪</button>
+    </div>
+    <div class="recap-controls" id="recap-controls">
+      <div class="recap-row"><span class="field-label dim">LENGTH</span>
+        <div class="chips" id="recap-len">
+          <button data-sec="15" class="on">15s</button>
+          <button data-sec="30">30s</button>
+        </div>
+      </div>
+      <div class="recap-row"><span class="field-label dim">MUSIC</span>
+        <div class="chips" id="recap-music">
+          <button data-vibe="warm" class="on">Warm</button>
+          <button data-vibe="dreamy">Dreamy</button>
+          <button data-vibe="upbeat">Upbeat</button>
+          <button data-vibe="none">Off</button>
+        </div>
+      </div>
+      <div class="recap-row"><span class="field-label dim">INCLUDE</span>
+        <div class="chips" id="recap-scope">
+          <button data-scope="fav" class="on">Favourites</button>
+          <button data-scope="all">Everything</button>
+        </div>
+      </div>
+      <button class="btn flash wide" id="recap-play">▶ Play recap</button>
+      <button class="btn ghost wide" id="recap-share">Share with everyone</button>
+    </div>
+  </div>
+
+  <!-- ============ LIGHTBOX (tap a moment) ============ -->
+  <div class="lightbox" id="lightbox" hidden>
+    <div class="lb-backdrop" id="lb-backdrop"></div>
+    <div class="lb-top">
+      <button class="lb-btn" id="lb-close" aria-label="Close">✕</button>
+      <button class="lb-btn wide" id="lb-toggle">View original</button>
+    </div>
+    <div class="lb-stage" id="lb-stage"></div>
+    <div class="lb-actions" id="lb-actions"></div>
+  </div>
+
+</main>
+
+<!-- ============ OVERLAYS ============ -->
+<div id="flash-fx"></div>
+
+<div class="sheet-wrap" id="sheet-pay" hidden>
+  <div class="sheet">
+    <p class="eyebrow" id="pay-eyebrow">PAYMENT</p>
+    <h2 class="h2" id="pay-title">Standard</h2>
+    <div class="pay-card mono">VISA ···· 4242<span>ROBERT R</span></div>
+    <button class="btn solid wide" id="pay-btn">Pay 99 SEK</button>
+    <button class="linkish" id="pay-cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="sheet-reveal" hidden>
+  <div class="sheet">
+    <p class="eyebrow">REVEAL THE ALBUM</p>
+    <h2 class="h2">Ready to show<br/>everything?</h2>
+    <p class="sub" id="reveal-sub">Every guest gets the album link by email &amp; SMS. There’s no going back to hidden.</p>
+    <button class="btn flash wide" id="reveal-confirm">Reveal now ✱</button>
+    <button class="linkish" id="reveal-cancel">Not yet</button>
+  </div>
+</div>
+
+<div class="notif" id="notif" hidden>
+  <p class="notif-from mono">DISPOSABLE · NOW</p>
+  <p class="notif-body">Your event memories are ready!</p>
+  <button class="btn flash sm" id="notif-open">Open album ✱</button>
+</div>
+
+<div id="toasts"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
