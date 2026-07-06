@@ -511,90 +511,92 @@ function drawInvite() {
   const W = cv.width, H = cv.height;
   const ctx = cv.getContext("2d");
   ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  roundRect(ctx, 0, 0, W, H, 70);
+  ctx.clip();
 
-  // background: cover photo, or a dark base with a faint accent glow
   if (cfg.cover && invImgCache.cover) {
     coverDraw(ctx, invImgCache.cover, W, H);
   } else {
-    ctx.fillStyle = "#141210";
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, "#b8d0d8");
+    bg.addColorStop(0.55, "#dbe5e4");
+    bg.addColorStop(1, "#8f948a");
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
-    const g = ctx.createRadialGradient(W * 0.5, H * 0.26, 0, W * 0.5, H * 0.26, W * 0.95);
-    g.addColorStop(0, hexA(cfg.accent, 0.34));
-    g.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.fillRect(W * 0.62, H * 0.6, W * 0.5, H * 0.35);
   }
-  // legibility scrim toward the bottom
-  const scrim = ctx.createLinearGradient(0, 0, 0, H);
-  scrim.addColorStop(0, "rgba(10,8,5,0.12)");
-  scrim.addColorStop(0.42, "rgba(10,8,5,0.02)");
-  scrim.addColorStop(1, "rgba(8,6,4,0.92)");
-  ctx.fillStyle = scrim;
+
+  const shade = ctx.createLinearGradient(0, 0, W, H);
+  shade.addColorStop(0, "rgba(0,0,0,0.12)");
+  shade.addColorStop(0.45, "rgba(0,0,0,0.02)");
+  shade.addColorStop(1, "rgba(0,0,0,0.42)");
+  ctx.fillStyle = shade;
   ctx.fillRect(0, 0, W, H);
 
-  // accent frame
-  ctx.strokeStyle = hexA(cfg.accent, 0.9);
-  ctx.lineWidth = 5;
-  ctx.strokeRect(38, 38, W - 76, H - 76);
+  const leftShade = ctx.createLinearGradient(0, 0, W * 0.7, 0);
+  leftShade.addColorStop(0, "rgba(0,0,0,0.30)");
+  leftShade.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = leftShade;
+  ctx.fillRect(0, 0, W, H);
 
-  const pad = 92;
+  const pad = 86;
   const font = invFontFamily(cfg.font);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
+  ctx.shadowColor = "rgba(0,0,0,0.18)";
+  ctx.shadowBlur = 14;
 
-  // logo top-left (optional)
-  if (cfg.logo && invImgCache.logo) {
-    const im = invImgCache.logo;
-    const mh = 120, mw = W * 0.5;
-    const s = Math.min(mw / im.width, mh / im.height);
-    ctx.drawImage(im, pad, 100, im.width * s, im.height * s);
-  }
-
-  // bottom-anchored details
-  let y = H - 720;
-
-  ctx.fillStyle = cfg.accent;
-  ctx.font = `700 26px "Azeret Mono", monospace`;
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = '700 23px "Azeret Mono", monospace';
   if ("letterSpacing" in ctx) ctx.letterSpacing = "5px";
-  ctx.fillText("YOU’RE INVITED", pad, y);
+  ctx.fillText("YOU'RE INVITED", pad, 130);
   if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
-  y += 96;
 
-  ctx.fillStyle = "#F8F6F0";
-  ctx.font = `800 100px ${font}`;
-  y = wrapLeft(ctx, e.name, pad, y, W - pad * 2, 102) + 46;
-
-  ctx.fillStyle = "rgba(248,246,240,0.82)";
-  ctx.font = `500 30px "Azeret Mono", monospace`;
-  ctx.fillText(`${inviteDateStr(e)}  ·  ${EXPOSURES} SHOTS`, pad, y);
-  y += 46;
-
-  ctx.strokeStyle = cfg.accent;
+  ctx.strokeStyle = "rgba(255,255,255,0.82)";
   ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + 100, y); ctx.stroke();
-  y += 56;
+  ctx.beginPath();
+  ctx.moveTo(pad, 178);
+  ctx.lineTo(pad + 78, 178);
+  ctx.stroke();
 
+  ctx.fillStyle = "#fff";
+  ctx.font = "300 126px " + font;
+  const nameY = H - 330;
+  wrapLeft(ctx, e.name, pad, nameY, W * 0.66, 120);
+
+  ctx.fillStyle = "rgba(255,255,255,0.88)";
+  ctx.font = '700 25px "Azeret Mono", monospace';
+  ctx.fillText(inviteDateStr(e) + "  ·  " + EXPOSURES + " SHOTS", pad, nameY + 70);
+
+  const qrY = H - 205;
   if (cfg.showQR) {
     drawQR($("#qr-canvas"), e.code, "#FFFFFF", "#15140F");
-    const q = 236, p = 18;
-    roundRect(ctx, pad, y, q + p * 2, q + p * 2, 22);
-    ctx.fillStyle = "#fff"; ctx.fill();
-    ctx.drawImage($("#qr-canvas"), pad + p, y + p, q, q);
+    const q = 146, p = 14;
+    ctx.shadowBlur = 0;
+    roundRect(ctx, pad, qrY, q + p * 2, q + p * 2, 14);
+    ctx.fillStyle = "rgba(255,255,255,0.96)";
+    ctx.fill();
+    ctx.drawImage($("#qr-canvas"), pad + p, qrY + p, q, q);
+
     const tx = pad + q + p * 2 + 36;
-    ctx.fillStyle = "rgba(248,246,240,0.75)";
-    ctx.font = `700 25px "Azeret Mono", monospace`;
-    ctx.fillText("SCAN OR TAP", tx, y + 96);
-    ctx.fillStyle = cfg.accent;
-    ctx.font = `700 31px "Azeret Mono", monospace`;
-    ctx.fillText(`dsp.app/e/${e.code}`, tx, y + 140);
-    ctx.fillStyle = "rgba(248,246,240,0.45)";
-    ctx.font = `700 21px "Azeret Mono", monospace`;
-    ctx.fillText("NO APP NEEDED", tx, y + 178);
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.font = '700 21px "Azeret Mono", monospace';
+    ctx.fillText("SCAN OR TAP", tx, qrY + 62);
+    ctx.fillStyle = "#fff";
+    ctx.font = '800 25px "Azeret Mono", monospace';
+    ctx.fillText("dsp.app/e/" + e.code, tx, qrY + 104);
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.font = '700 18px "Azeret Mono", monospace';
+    ctx.fillText("NO APP NEEDED", tx, qrY + 142);
   } else {
-    ctx.fillStyle = cfg.accent;
-    ctx.font = `700 32px "Azeret Mono", monospace`;
-    ctx.fillText(`dsp.app/e/${e.code}`, pad, y + 32);
+    ctx.fillStyle = "#fff";
+    ctx.font = '800 28px "Azeret Mono", monospace';
+    ctx.fillText("dsp.app/e/" + e.code, pad, qrY + 80);
   }
+
+  ctx.restore();
 }
 
 function drawQR(canvas, code, light = "#F3EEE4", dark = "#17140F") {
@@ -649,10 +651,10 @@ function syncInviteControls() {
   $$("#font-menu button").forEach((b) => b.classList.toggle("on", b.dataset.font === cfg.font));
   $("#font-current").textContent = fontLabels[cfg.font] || "Modern";
   $("#tg-qr").classList.toggle("on", cfg.showQR);
-  $("#tg-qr").textContent = cfg.showQR ? "QR ✓" : "QR";
+  $("#tg-qr").textContent = cfg.showQR ? "QR code" : "QR off";
   $("#color-dot").style.background = cfg.accent;
-  $("#cover-label").textContent = cfg.cover ? "Change cover photo" : "＋ Add cover photo";
-  const c = document.querySelector(".inv-cover");
+  $("#cover-label").textContent = cfg.cover ? "Cover set" : "Cover";
+  const c = document.querySelector(".tool-card.cover");
   if (c) c.classList.toggle("has", !!cfg.cover);
 }
 
@@ -763,14 +765,7 @@ function bindShare() {
     a.click();
     toast("INVITE DOWNLOADED ✓");
   });
-  const closeEdit = () => { save(); $("#invite-edit").hidden = true; $("#font-menu").hidden = true; };
-  $("#btn-customize").addEventListener("click", () => {
-    syncInviteControls();
-    $("#invite-edit").hidden = false;
-  });
-  $("#es-done").addEventListener("click", closeEdit);
-  $("#es-apply").addEventListener("click", closeEdit);
-  $("#es-backdrop").addEventListener("click", closeEdit);
+  const closeMenus = () => { save(); $("#font-menu").hidden = true; };
   $("#font-dd-btn").addEventListener("click", () => {
     $("#font-menu").hidden = !$("#font-menu").hidden;
   });
@@ -779,7 +774,7 @@ function bindShare() {
     if (!b) return;
     S.event.invite.font = b.dataset.font;
     $("#font-menu").hidden = true;
-    save(); syncInviteControls(); drawInvite();
+    closeMenus(); syncInviteControls(); drawInvite();
   });
   $("#tg-qr").addEventListener("click", () => {
     S.event.invite.showQR = !S.event.invite.showQR;

@@ -148,49 +148,48 @@
       <p class="sub">This is what guests see when you share the event.</p>
 
       <div class="invite-preview big">
-        <canvas id="invite-canvas" width="1080" height="1440"></canvas>
+        <canvas id="invite-canvas" width="1440" height="900"></canvas>
       </div>
 
-      <button class="btn outline wide" id="btn-customize">✦ Customize design</button>
-      <div class="invite-actions">
-        <button class="mini-action" id="btn-copy">Copy link</button>
-        <button class="mini-action" id="btn-share">Share</button>
-        <button class="mini-action" id="btn-dlcard">Download</button>
-      </div>
-      <button class="btn solid wide" id="btn-open-dash">Open live dashboard →</button>
-
-      <canvas id="qr-canvas" width="290" height="290" hidden></canvas>
-    </div>
-
-    <!-- customize sheet -->
-    <div class="edit-sheet" id="invite-edit" hidden>
-      <div class="es-backdrop" id="es-backdrop"></div>
-      <div class="es-panel">
-        <div class="es-head">
-          <p class="eyebrow">CUSTOMIZE INVITE</p>
-          <button class="lb-btn" id="es-done" aria-label="Done">✕</button>
-        </div>
-        <label class="inv-cover" for="up-cover">
-          <input type="file" id="up-cover" accept="image/*" hidden />
-          <span id="cover-label">Change cover photo</span>
-        </label>
-        <div class="es-row">
-          <button class="color-btn" id="open-color"><i class="color-dot" id="color-dot"></i>Colour</button>
-          <div class="dropdown" id="font-dd">
-            <button class="dd-btn" id="font-dd-btn">Aa&nbsp; <span id="font-current">Modern</span> <i>▾</i></button>
+      <div class="invite-section">
+        <h2 class="section-title">Customize</h2>
+        <div class="tool-grid">
+          <label class="tool-card cover" for="up-cover">
+            <input type="file" id="up-cover" accept="image/*" hidden />
+            <span class="tool-icon">▧</span>
+            <span id="cover-label">Cover</span>
+          </label>
+          <button class="tool-card" id="open-color">
+            <i class="color-dot" id="color-dot"></i>
+            <span>Color</span>
+          </button>
+          <div class="dropdown tool-wrap" id="font-dd">
+            <button class="tool-card" id="font-dd-btn"><b>Aa</b><span id="font-current">Modern</span><i>▾</i></button>
             <div class="dd-menu" id="font-menu" hidden>
               <button data-font="grotesk">Modern</button>
               <button data-font="serif">Classic</button>
               <button data-font="mono">Mono</button>
             </div>
           </div>
-          <button class="inv-toggle on" id="tg-qr">QR ✓</button>
+          <button class="tool-card qr-tool on" id="tg-qr">QR code</button>
         </div>
-        <div class="es-actions">
-          <button class="inv-clear" id="inv-clear">Reset</button>
-          <button class="btn solid es-apply" id="es-apply">Done</button>
+        <button class="reset-inline" id="inv-clear">Reset design</button>
+      </div>
+
+      <div class="section-rule"></div>
+
+      <div class="invite-section">
+        <h2 class="section-title">Share</h2>
+        <div class="invite-actions">
+          <button class="mini-action" id="btn-copy">Copy link</button>
+          <button class="mini-action" id="btn-share">Share</button>
+          <button class="mini-action" id="btn-dlcard">Download</button>
         </div>
       </div>
+
+      <button class="btn solid wide" id="btn-open-dash">Open live dashboard →</button>
+
+      <canvas id="qr-canvas" width="290" height="290" hidden></canvas>
     </div>
 
     <!-- photoshop-style colour picker -->
