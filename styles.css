@@ -649,23 +649,8 @@ body::after {
   letter-spacing: -0.02em;
   text-align: center;
 }
-.dash-action-icon { font-size: 28px; line-height: 1; opacity: 0.92; }
-.dash-action.reveal { border-color: var(--paper-30); }
-.dash-invite-link {
-  width: 100%;
-  margin-top: 12px;
-  border: 1px solid var(--paper-12);
-  background: transparent;
-  color: var(--paper-70);
-  border-radius: 99px;
-  padding: 15px 18px;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
+.dash-action-icon { font-size: 28px; line-height: 1; opacity: 0.92; display: grid; place-items: center; }
+.dash-icon-svg { width: 34px; height: 34px; display: block; }
 #request-slot { margin-top: 12px; }
 .request-stack { position: relative; margin: 6px 0 20px; }
 .request-stack.has-more::before,

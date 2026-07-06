@@ -952,7 +952,8 @@ function bindDash() {
       `All ${S.guests.length} guests get the album link by email & SMS. There’s no going back to hidden.`;
     $("#sheet-reveal").hidden = false;
   };
-  $("#btn-reveal").addEventListener("click", openReveal);
+  const dashReveal = document.getElementById("btn-reveal");
+  if (dashReveal) dashReveal.addEventListener("click", openReveal);
   $("#btn-reveal-2").addEventListener("click", openReveal);
   $("#reveal-cancel").addEventListener("click", () => { $("#sheet-reveal").hidden = true; });
   $("#reveal-confirm").addEventListener("click", () => {
