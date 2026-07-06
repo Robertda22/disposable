@@ -645,9 +645,11 @@ function loadInviteImage(slot, dataURL) {
 
 function syncInviteControls() {
   const cfg = S.event.invite;
-  $$("#inv-fonts button").forEach((b) => b.classList.toggle("on", b.dataset.font === cfg.font));
+  const fontLabels = { grotesk: "Modern", serif: "Classic", mono: "Mono" };
+  $$("#font-menu button").forEach((b) => b.classList.toggle("on", b.dataset.font === cfg.font));
+  $("#font-current").textContent = fontLabels[cfg.font] || "Modern";
   $("#tg-qr").classList.toggle("on", cfg.showQR);
-  $("#tg-qr").textContent = cfg.showQR ? "QR code ✓" : "QR code";
+  $("#tg-qr").textContent = cfg.showQR ? "QR ✓" : "QR";
   $("#color-dot").style.background = cfg.accent;
   $("#cover-label").textContent = cfg.cover ? "Change cover photo" : "＋ Add cover photo";
   const c = document.querySelector(".inv-cover");
@@ -742,29 +744,22 @@ function scaleImageToDataURL(file, maxDim, cb) {
 }
 
 function bindShare() {
-  const link = () => `https://dsp.app/e/${S.event?.code || ""}`;
-  $("#btn-copy").addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(link()); toast("LINK COPIED ✓"); }
-    catch { toast(link()); }
+  const closeEdit = () => { save(); $("#invite-edit").hidden = true; $("#font-menu").hidden = true; };
+  $("#btn-customize").addEventListener("click", () => {
+    syncInviteControls();
+    $("#invite-edit").hidden = false;
   });
-  $("#btn-share").addEventListener("click", async () => {
-    if (navigator.share) {
-      try { await navigator.share({ title: S.event.name, url: link() }); } catch {}
-    } else {
-      try { await navigator.clipboard.writeText(link()); toast("NO SHARE SHEET — LINK COPIED ✓"); } catch {}
-    }
+  $("#es-done").addEventListener("click", closeEdit);
+  $("#es-apply").addEventListener("click", closeEdit);
+  $("#es-backdrop").addEventListener("click", closeEdit);
+  $("#font-dd-btn").addEventListener("click", () => {
+    $("#font-menu").hidden = !$("#font-menu").hidden;
   });
-  $("#btn-dlcard").addEventListener("click", () => {
-    const a = document.createElement("a");
-    a.download = `invite-${S.event?.code || "card"}.png`;
-    a.href = $("#invite-canvas").toDataURL("image/png");
-    a.click();
-    toast("INVITE SAVED ✓");
-  });
-  $("#inv-fonts").addEventListener("click", (e) => {
+  $("#font-menu").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
     S.event.invite.font = b.dataset.font;
+    $("#font-menu").hidden = true;
     save(); syncInviteControls(); drawInvite();
   });
   $("#tg-qr").addEventListener("click", () => {
@@ -776,13 +771,6 @@ function bindShare() {
     scaleImageToDataURL(f, 1400, (url) => {
       S.event.invite.cover = url; save();
       syncInviteControls(); loadInviteImage("cover", url); toast("COVER ADDED ✓");
-    });
-  });
-  $("#up-logo").addEventListener("change", (e) => {
-    const f = e.target.files[0]; if (!f) return;
-    scaleImageToDataURL(f, 600, (url) => {
-      S.event.invite.logo = url; save();
-      loadInviteImage("logo", url); toast("LOGO ADDED ✓");
     });
   });
   $("#inv-clear").addEventListener("click", () => {
