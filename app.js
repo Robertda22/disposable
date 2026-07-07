@@ -227,6 +227,7 @@ const enterHooks = {
   "s-host-create": renderCreate,
   "s-host-unlock": renderUnlock,
   "s-host-share": renderShare,
+  "s-invite-edit": renderShare,
   "s-host-dash": renderDash,
   "s-host-review": enterReview,
   "s-guest-join": renderJoin,
@@ -650,6 +651,8 @@ function syncInviteControls() {
   $("#cover-label").textContent = cfg.cover ? "Cover set" : "Cover";
   const c = document.querySelector(".tool-card.cover");
   if (c) c.classList.toggle("has", !!cfg.cover);
+  const preview = $("#invite-edit-preview");
+  if (preview && $("#invite-canvas")) preview.src = $("#invite-canvas").toDataURL("image/png");
 }
 
 /* ---------- colour picker (hue + saturation/value) ---------- */
@@ -740,12 +743,10 @@ function scaleImageToDataURL(file, maxDim, cb) {
 }
 
 function bindShare() {
-  // the invite step is just a preview; customizing pops up in a sheet
-  const openEdit = () => { $("#invite-edit").hidden = false; };
-  const closeEdit = () => { save(); $("#font-menu").hidden = true; $("#invite-edit").hidden = true; };
+  const openEdit = () => { save(); go("s-invite-edit"); };
+  const closeEdit = () => { save(); $("#font-menu").hidden = true; go("s-host-share"); };
   $("#btn-customize").addEventListener("click", openEdit);
   $("#es-done").addEventListener("click", closeEdit);
-  $("#es-backdrop").addEventListener("click", closeEdit);
 
   $("#btn-dlcard").addEventListener("click", () => {
     const a = document.createElement("a");
@@ -782,10 +783,14 @@ function bindShare() {
     save(); syncInviteControls(); drawInvite();
   });
   bindColorPicker();
-  $("#btn-open-dash").addEventListener("click", () => {
-    S.event.shared = true;
-    save();
-    go("s-host-dash");
+  ["#btn-open-dash", "#btn-open-dash-edit"].forEach((sel) => {
+    const btn = $(sel);
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      S.event.shared = true;
+      save();
+      go("s-host-dash");
+    });
   });
 }
 
@@ -1142,17 +1147,13 @@ function bindLightbox() {
 /* ============================================================
    RECAP FILM — post-event animated slideshow with music
    ============================================================ */
-const recapCfg = { sec: 15, vibe: "warm", scope: "fav" };
+const recapCfg = { sec: 15, vibe: "none" };
 let recapPlaying = false;
 let recapTimer = null, recapRaf = 0;
 let audioCtx = null, arpTimer = null, recapMuted = false;
 
 function recapMoments() {
-  const all = S.moments.filter((m) => !m.removed);
-  let list = recapCfg.scope === "fav" ? all.filter((m) => m.favorite) : all;
-  if (!list.length) list = all; // fall back if no favourites
-  list = [...list].sort((a, b) => a.ts - b.ts);
-  return list.slice(0, 14);
+  return S.moments.filter((m) => !m.removed).sort((a, b) => a.ts - b.ts).slice(0, 14);
 }
 
 function openRecap() {
@@ -1161,6 +1162,7 @@ function openRecap() {
   $("#recap-controls").hidden = false;
   $("#recap-progress").hidden = true;
   $("#recap-play").textContent = "▶ Play recap";
+  syncRecapControls();
   posterRecap();
 }
 function closeRecap() {
@@ -1179,7 +1181,7 @@ function posterRecap() {
     s.style.opacity = "0.5";
     stage.appendChild(s);
   }
-  showCard("RECAP FILM", S.event?.name || "", `${ms.length} MOMENTS · READY TO PLAY`);
+  showCard("RECAP FILM", S.event?.name || "", `${recapCfg.sec}s · ${ms.length} MOMENTS`);
 }
 
 function showCard(eyebrow, title, sub) {
@@ -1310,6 +1312,16 @@ function stopMusic() {
   if (audioCtx) { try { audioCtx.close(); } catch {} audioCtx = null; }
 }
 
+function syncRecapControls() {
+  const b = $("#recap-music-toggle");
+  if (!b) return;
+  const on = recapCfg.vibe !== "none";
+  b.classList.toggle("on", on);
+  b.dataset.vibe = recapCfg.vibe;
+  b.textContent = on ? "Music on" : "Add music";
+  $$("#recap-len button").forEach((x) => x.classList.toggle("on", +x.dataset.sec === recapCfg.sec));
+}
+
 function bindRecap() {
   $("#btn-recap").addEventListener("click", openRecap);
   $("#recap-close").addEventListener("click", closeRecap);
@@ -1327,18 +1339,13 @@ function bindRecap() {
   $("#recap-len").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
     recapCfg.sec = +b.dataset.sec;
-    $$("#recap-len button").forEach((x) => x.classList.toggle("on", x === b));
+    syncRecapControls();
+    posterRecap();
   });
   $("#recap-music").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
-    recapCfg.vibe = b.dataset.vibe;
-    $$("#recap-music button").forEach((x) => x.classList.toggle("on", x === b));
-  });
-  $("#recap-scope").addEventListener("click", (e) => {
-    const b = e.target.closest("button"); if (!b) return;
-    recapCfg.scope = b.dataset.scope;
-    $$("#recap-scope button").forEach((x) => x.classList.toggle("on", x === b));
-    posterRecap();
+    recapCfg.vibe = recapCfg.vibe === "none" ? "warm" : "none";
+    syncRecapControls();
   });
 }
 

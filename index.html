@@ -157,39 +157,50 @@
       <canvas id="qr-canvas" width="290" height="290" hidden></canvas>
     </div>
 
-    <!-- customize sheet (pops up from the button) -->
-    <div class="edit-sheet" id="invite-edit" hidden>
-      <div class="es-backdrop" id="es-backdrop"></div>
-      <div class="es-panel">
-        <div class="es-head">
-          <h2 class="section-title es-title">Customize invite</h2>
-          <button class="lb-btn" id="es-done" aria-label="Done">✕</button>
+  </section>
+
+  <!-- ============ HOST · CUSTOMIZE INVITE ============ -->
+  <section class="screen light" id="s-invite-edit">
+    <div class="screen-pad invite-edit-page">
+      <div class="edit-page-head">
+        <div>
+          <p class="eyebrow">INVITE DESIGN</p>
+          <h1 class="h1">Customize<br/><em>invite</em></h1>
         </div>
-        <div class="tool-grid">
-          <label class="tool-card cover" for="up-cover">
-            <input type="file" id="up-cover" accept="image/*" hidden />
-            <span class="tool-icon">▧</span>
-            <span id="cover-label">Cover</span>
-          </label>
-          <button class="tool-card" id="open-color">
-            <i class="color-dot" id="color-dot"></i>
-            <span>Color</span>
-          </button>
-          <div class="dropdown tool-wrap" id="font-dd">
-            <button class="tool-card" id="font-dd-btn"><b>Aa</b><span id="font-current">Modern</span><i>▾</i></button>
-            <div class="dd-menu" id="font-menu" hidden>
-              <button data-font="grotesk">Modern</button>
-              <button data-font="serif">Classic</button>
-              <button data-font="mono">Mono</button>
-            </div>
+        <button class="lb-btn" id="es-done" aria-label="Done">✕</button>
+      </div>
+
+      <div class="invite-edit-preview-wrap">
+        <img id="invite-edit-preview" alt="Invite card preview" />
+      </div>
+
+      <div class="edit-tools">
+        <label class="tool-card cover edit-tool-wide" for="up-cover">
+          <input type="file" id="up-cover" accept="image/*" hidden />
+          <span class="tool-icon">▧</span>
+          <span id="cover-label">Cover</span>
+        </label>
+        <button class="tool-card edit-tool-wide" id="open-color">
+          <i class="color-dot" id="color-dot"></i>
+          <span>Color</span>
+        </button>
+        <div class="dropdown tool-wrap edit-tool-wide" id="font-dd">
+          <button class="tool-card" id="font-dd-btn"><b>Aa</b><span id="font-current">Modern</span><i>▾</i></button>
+          <div class="dd-menu" id="font-menu" hidden>
+            <button data-font="grotesk">Modern</button>
+            <button data-font="serif">Classic</button>
+            <button data-font="mono">Mono</button>
           </div>
-          <button class="tool-card qr-tool on" id="tg-qr">QR code</button>
-        </div>
-        <div class="es-actions">
-          <button class="reset-inline" id="inv-clear">Reset design</button>
-          <button class="mini-action" id="btn-dlcard">Download card</button>
         </div>
       </div>
+
+      <div class="edit-bottom-actions">
+        <button class="icon-action qr-tool on" id="tg-qr" aria-label="Toggle QR code">▦</button>
+        <button class="icon-action" id="inv-clear" aria-label="Reset design">↻</button>
+        <button class="icon-action" id="btn-dlcard" aria-label="Download card">↓</button>
+      </div>
+
+      <button class="btn solid wide" id="btn-open-dash-edit">Open live dashboard →</button>
     </div>
 
     <!-- photoshop-style colour picker -->
@@ -482,16 +493,7 @@
       </div>
       <div class="recap-row"><span class="field-label dim">MUSIC</span>
         <div class="chips" id="recap-music">
-          <button data-vibe="warm" class="on">Warm</button>
-          <button data-vibe="dreamy">Dreamy</button>
-          <button data-vibe="upbeat">Upbeat</button>
-          <button data-vibe="none">Off</button>
-        </div>
-      </div>
-      <div class="recap-row"><span class="field-label dim">INCLUDE</span>
-        <div class="chips" id="recap-scope">
-          <button data-scope="fav" class="on">Favourites</button>
-          <button data-scope="all">Everything</button>
+          <button id="recap-music-toggle" data-vibe="none">Add music</button>
         </div>
       </div>
       <button class="btn flash wide" id="recap-play">▶ Play recap</button>
