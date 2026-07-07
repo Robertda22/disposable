@@ -503,97 +503,91 @@ function wrapLeft(ctx, text, x, y, maxW, lh) {
 
 // the invite = a cover photo with the event details + QR, bottom-anchored.
 // one accent colour drives the label, divider, frame and link ("one unit").
+// portrait invite: cover photo + bottom-anchored details.
+// one accent colour drives the label, divider and link ("one unit"); title stays white.
 function drawInvite() {
   const e = S.event;
   if (!e || !e.invite) return;
   const cfg = e.invite;
   const cv = $("#invite-canvas");
-  const W = cv.width, H = cv.height;
+  const W = cv.width, H = cv.height; // 1080 x 1440
   const ctx = cv.getContext("2d");
   ctx.clearRect(0, 0, W, H);
   ctx.save();
-  roundRect(ctx, 0, 0, W, H, 70);
+  roundRect(ctx, 0, 0, W, H, 56);
   ctx.clip();
 
+  // background: cover photo, or a dark base with a faint accent glow
   if (cfg.cover && invImgCache.cover) {
     coverDraw(ctx, invImgCache.cover, W, H);
   } else {
-    const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, "#b8d0d8");
-    bg.addColorStop(0.55, "#dbe5e4");
-    bg.addColorStop(1, "#8f948a");
-    ctx.fillStyle = bg;
+    ctx.fillStyle = "#141210";
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(255,255,255,0.18)";
-    ctx.fillRect(W * 0.62, H * 0.6, W * 0.5, H * 0.35);
+    const g = ctx.createRadialGradient(W * 0.5, H * 0.26, 0, W * 0.5, H * 0.26, W * 0.95);
+    g.addColorStop(0, hexA(cfg.accent, 0.34));
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
   }
 
-  const shade = ctx.createLinearGradient(0, 0, W, H);
-  shade.addColorStop(0, "rgba(0,0,0,0.12)");
-  shade.addColorStop(0.45, "rgba(0,0,0,0.02)");
-  shade.addColorStop(1, "rgba(0,0,0,0.42)");
-  ctx.fillStyle = shade;
+  // legibility scrim toward the bottom
+  const scrim = ctx.createLinearGradient(0, 0, 0, H);
+  scrim.addColorStop(0, "rgba(10,8,5,0.10)");
+  scrim.addColorStop(0.42, "rgba(10,8,5,0.02)");
+  scrim.addColorStop(0.82, hexA(cfg.accent, 0.36));
+  scrim.addColorStop(1, hexA(cfg.accent, 0.82));
+  ctx.fillStyle = scrim;
   ctx.fillRect(0, 0, W, H);
 
-  const leftShade = ctx.createLinearGradient(0, 0, W * 0.7, 0);
-  leftShade.addColorStop(0, "rgba(0,0,0,0.30)");
-  leftShade.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = leftShade;
-  ctx.fillRect(0, 0, W, H);
 
-  const pad = 86;
+  const pad = 88;
   const font = invFontFamily(cfg.font);
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.shadowColor = "rgba(0,0,0,0.18)";
-  ctx.shadowBlur = 14;
 
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.font = '700 23px "Azeret Mono", monospace';
+  let y = H - 730;
+
+  ctx.fillStyle = cfg.accent;
+  ctx.font = '700 26px "Azeret Mono", monospace';
   if ("letterSpacing" in ctx) ctx.letterSpacing = "5px";
-  ctx.fillText("YOU'RE INVITED", pad, 130);
+  ctx.fillText("YOU'RE INVITED", pad, y);
   if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+  y += 94;
 
-  ctx.strokeStyle = "rgba(255,255,255,0.82)";
+  ctx.fillStyle = "#F8F6F0";
+  ctx.font = "800 100px " + font;
+  y = wrapLeft(ctx, e.name, pad, y, W - pad * 2, 104) + 44;
+
+  ctx.fillStyle = "rgba(248,246,240,0.82)";
+  ctx.font = '500 30px "Azeret Mono", monospace';
+  ctx.fillText(inviteDateStr(e) + "  ·  " + EXPOSURES + " SHOTS", pad, y);
+  y += 46;
+
+  ctx.strokeStyle = cfg.accent;
   ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(pad, 178);
-  ctx.lineTo(pad + 78, 178);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + 100, y); ctx.stroke();
+  y += 58;
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "300 126px " + font;
-  const nameY = H - 330;
-  wrapLeft(ctx, e.name, pad, nameY, W * 0.66, 120);
-
-  ctx.fillStyle = "rgba(255,255,255,0.88)";
-  ctx.font = '700 25px "Azeret Mono", monospace';
-  ctx.fillText(inviteDateStr(e) + "  ·  " + EXPOSURES + " SHOTS", pad, nameY + 70);
-
-  const qrY = H - 205;
   if (cfg.showQR) {
     drawQR($("#qr-canvas"), e.code, "#FFFFFF", "#15140F");
-    const q = 146, p = 14;
-    ctx.shadowBlur = 0;
-    roundRect(ctx, pad, qrY, q + p * 2, q + p * 2, 14);
-    ctx.fillStyle = "rgba(255,255,255,0.96)";
-    ctx.fill();
-    ctx.drawImage($("#qr-canvas"), pad + p, qrY + p, q, q);
-
+    const q = 240, p = 18;
+    roundRect(ctx, pad, y, q + p * 2, q + p * 2, 22);
+    ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.drawImage($("#qr-canvas"), pad + p, y + p, q, q);
     const tx = pad + q + p * 2 + 36;
-    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.fillStyle = "rgba(248,246,240,0.75)";
+    ctx.font = '700 25px "Azeret Mono", monospace';
+    ctx.fillText("SCAN OR TAP", tx, y + 100);
+    ctx.fillStyle = cfg.accent;
+    ctx.font = '700 31px "Azeret Mono", monospace';
+    ctx.fillText("dsp.app/e/" + e.code, tx, y + 144);
+    ctx.fillStyle = "rgba(248,246,240,0.45)";
     ctx.font = '700 21px "Azeret Mono", monospace';
-    ctx.fillText("SCAN OR TAP", tx, qrY + 62);
-    ctx.fillStyle = "#fff";
-    ctx.font = '800 25px "Azeret Mono", monospace';
-    ctx.fillText("dsp.app/e/" + e.code, tx, qrY + 104);
-    ctx.fillStyle = "rgba(255,255,255,0.72)";
-    ctx.font = '700 18px "Azeret Mono", monospace';
-    ctx.fillText("NO APP NEEDED", tx, qrY + 142);
+    ctx.fillText("NO APP NEEDED", tx, y + 182);
   } else {
-    ctx.fillStyle = "#fff";
-    ctx.font = '800 28px "Azeret Mono", monospace';
-    ctx.fillText("dsp.app/e/" + e.code, pad, qrY + 80);
+    ctx.fillStyle = cfg.accent;
+    ctx.font = '700 32px "Azeret Mono", monospace';
+    ctx.fillText("dsp.app/e/" + e.code, pad, y + 32);
   }
 
   ctx.restore();
@@ -746,18 +740,13 @@ function scaleImageToDataURL(file, maxDim, cb) {
 }
 
 function bindShare() {
-  const link = () => "https://dsp.app/e/" + ((S.event && S.event.code) || "");
-  $("#btn-copy").addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(link()); toast("LINK COPIED ✓"); }
-    catch { toast(link()); }
-  });
-  $("#btn-share").addEventListener("click", async () => {
-    if (navigator.share) {
-      try { await navigator.share({ title: (S.event && S.event.name) || "Disposable event", url: link() }); return; } catch {}
-    }
-    try { await navigator.clipboard.writeText(link()); toast("LINK COPIED ✓"); }
-    catch { toast(link()); }
-  });
+  // the invite step is just a preview; customizing pops up in a sheet
+  const openEdit = () => { $("#invite-edit").hidden = false; };
+  const closeEdit = () => { save(); $("#font-menu").hidden = true; $("#invite-edit").hidden = true; };
+  $("#btn-customize").addEventListener("click", openEdit);
+  $("#es-done").addEventListener("click", closeEdit);
+  $("#es-backdrop").addEventListener("click", closeEdit);
+
   $("#btn-dlcard").addEventListener("click", () => {
     const a = document.createElement("a");
     a.download = "invite-" + (((S.event && S.event.code) || "card")) + ".png";
@@ -809,6 +798,11 @@ function renderDash() {
   const e = S.event;
   if (!e) { go("s-host-create"); return; }
   $("#dash-name").textContent = e.name;
+  const accent = (e.invite && e.invite.accent) || "#E5352B";
+  const dash = $("#s-host-dash");
+  dash.style.setProperty("--dash-accent-soft", hexA(accent, 0.22));
+  dash.style.setProperty("--dash-accent-deep", hexA(accent, 0.34));
+  dash.style.setProperty("--dash-accent-shadow", hexA(accent, 0.28));
   const cover = (e.invite && e.invite.cover) || e.cover;
   const banner = $("#dash-banner");
   if (cover) {
