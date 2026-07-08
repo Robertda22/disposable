@@ -240,6 +240,7 @@ function go(id) {
   $$(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
   if (id !== "s-guest-main") stopCam();
   closeLightbox();
+  closeQrPop();
   closeRecap();
   (enterHooks[id] || (() => {}))();
   const stage = $("#" + id);
@@ -939,9 +940,22 @@ function acceptRequest(kind) {
   }
 }
 
+function openQrPop() {
+  if (!S.event) return;
+  $("#qr-pop-name").textContent = S.event.name;
+  drawQR($("#qr-pop-canvas"), S.event.code, "#FFFFFF", "#15140F");
+  $("#qr-pop").hidden = false;
+}
+function closeQrPop() {
+  const pop = $("#qr-pop");
+  if (pop) pop.hidden = true;
+}
+
 function bindDash() {
+  $("#qr-pop-close").addEventListener("click", closeQrPop);
+  $("#qr-pop-backdrop").addEventListener("click", closeQrPop);
   $("#btn-review").addEventListener("click", () => go("s-host-review"));
-  $("#btn-reshare").addEventListener("click", () => go("s-host-share"));
+  $("#btn-reshare").addEventListener("click", openQrPop);
   $("#btn-host-cam").addEventListener("click", () => {
     if (!S.you.name) S.you.name = "Host";
     go("s-guest-main"); // host can capture too; their shots stay hidden like everyone's

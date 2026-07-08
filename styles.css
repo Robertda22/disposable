@@ -1818,3 +1818,56 @@ body::after {
 .icon-action { min-height: 54px; border-radius: 18px; border: 1.5px solid var(--ink-15); background: transparent; color: var(--ink); font-size: 24px; font-weight: 800; cursor: pointer; }
 .icon-action.qr-tool.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 @media (min-width: 720px) { .invite-edit-preview-wrap { width: 360px; } }
+
+
+/* dashboard QR popup */
+.qr-pop {
+  position: absolute;
+  inset: 0;
+  z-index: 82;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.qr-pop[hidden] { display: none; }
+.qr-pop-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15,13,9,0.56);
+  backdrop-filter: blur(9px);
+}
+.qr-pop-card {
+  position: relative;
+  width: min(82vw, 390px);
+  border-radius: 28px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 28px 24px 24px;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.34);
+  text-align: center;
+}
+.qr-pop-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--ink-08);
+  border-color: var(--ink-15);
+  color: var(--ink);
+}
+.qr-pop-name {
+  margin: 8px 42px 18px;
+  font-size: 34px;
+  line-height: 0.96;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+#qr-pop-canvas {
+  display: block;
+  width: 100%;
+  max-width: 318px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 22px;
+  background: #fff;
+  padding: 12px;
+}
