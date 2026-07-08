@@ -77,7 +77,7 @@ const ROLE_KEY = "disposable_proto_role"; // per-tab, so one tab can be host and
 function initialState() {
   return {
     role: null,
-    event: null,          // {name, cover, start, end, unlock, revealAt, pkg, max, code, shared, revealed, revealedAt, createdAt}
+    event: null,          // {name, cover, start, end, unlock, revealAt, cameraStyle, pkg, max, code, shared, revealed, revealedAt, createdAt}
     guests: [],           // {id, name, sim}
     moments: [],          // {id, guestId, name, kind, ts, removed, sim, seed | frames[]}
     you: { joined: false },
@@ -226,6 +226,7 @@ function screenForRole(role) {
 const enterHooks = {
   "s-host-create": renderCreate,
   "s-host-unlock": renderUnlock,
+  "s-host-style": renderStyle,
   "s-host-share": renderShare,
   "s-invite-edit": renderShare,
   "s-host-dash": renderDash,
@@ -405,34 +406,57 @@ function bindPackage() {
     if (!draft) { go("s-host-create"); return; }
     const key = document.querySelector('input[name="pkg"]:checked').value;
     const pkg = PKGS[key];
+    draft.pkg = key;
+    draft.max = pkg.max;
+    draft.pkgPrice = pkg.price;
+    draft.pkgLabel = pkg.label;
+    if (!draft.cameraStyle) draft.cameraStyle = "vintage";
+    go("s-host-style");
+  });
+}
+function updatePkgBtn() {
+  $("#btn-pkg-continue").textContent = "Continue →";
+}
+
+function renderStyle() {
+  if (!draft) { go("s-host-create"); return; }
+  const chosen = draft.cameraStyle || "vintage";
+  const radio = document.querySelector('input[name="cameraStyle"][value="' + chosen + '"]');
+  if (radio) radio.checked = true;
+}
+function bindStyle() {
+  $("#style-cards").addEventListener("change", () => {
+    if (!draft) return;
+    draft.cameraStyle = document.querySelector('input[name="cameraStyle"]:checked').value;
+  });
+  $("#btn-style-continue").addEventListener("click", () => {
+    if (!draft) { go("s-host-create"); return; }
+    draft.cameraStyle = document.querySelector('input[name="cameraStyle"]:checked').value;
     const finalize = () => {
       S.event = {
         ...draft,
-        pkg: key,
-        max: pkg.max,
+        pkg: draft.pkg || "free",
+        max: draft.max || PKGS.free.max,
         code: uid().slice(0, 4).toUpperCase(),
         createdAt: Date.now(),
         shared: false,
         revealed: false,
         revealedAt: null,
+        reviewReminderSeen: false,
       };
+      delete S.event.pkgPrice;
+      delete S.event.pkgLabel;
       save();
-      if (pkg.price > 0) toast(`✓ PAID ${pkg.price} SEK — EVENT CREATED`);
+      if (draft.pkgPrice > 0) toast("✓ PAID " + draft.pkgPrice + " SEK — EVENT CREATED");
       go("s-host-share");
     };
-    if (pkg.price > 0) {
-      openPay({ title: `${pkg.label} — up to ${pkg.max} guests`, price: pkg.price, onDone: finalize });
+    if (draft.pkgPrice > 0) {
+      openPay({ title: draft.pkgLabel + " — up to " + draft.max + " guests", price: draft.pkgPrice, onDone: finalize });
     } else {
       finalize();
     }
   });
 }
-function updatePkgBtn() {
-  const key = document.querySelector('input[name="pkg"]:checked').value;
-  const pkg = PKGS[key];
-  $("#btn-pkg-continue").textContent = pkg.price > 0 ? `Pay ${pkg.price} SEK →` : "Create event — free";
-}
-
 /* ============================================================
    HOST · INVITE CARD DESIGNER
    ============================================================ */
@@ -842,7 +866,7 @@ function renderStats() {
   setNum("#st-moments", S.moments.length);
 
   const chip = $("#dash-chip");
-  chip.textContent = { upcoming: "UPCOMING", live: "ONGOING", ended: "DEVELOPING", revealed: "REVEALED" }[phase];
+  chip.textContent = { upcoming: "UPCOMING", live: "ONGOING", ended: "REVIEW READY", revealed: "REVEALED" }[phase];
   chip.parentElement?.classList.toggle("is-live", phase === "live");
 
   const label = $("#st-clock-label"), clock = $("#st-clock");
@@ -852,12 +876,16 @@ function renderStats() {
   } else if (phase === "live") {
     label.textContent = "TIME REMAINING";
     clock.textContent = fmtCountdown(e.end - now);
-  } else if (e.unlock === "time" && !e.revealed) {
-    label.textContent = "REVEAL IN";
+  } else if (phase === "ended") {
+    label.textContent = "READY";
+    styleTextNum(clock, "Review ready");
+    return;
+  } else if (e.unlock === "time" && !e.revealed && e.revealAt > now) {
+    label.textContent = "REVIEW REMINDER";
     clock.textContent = fmtCountdown(e.revealAt - now);
   } else {
     label.textContent = "REVEAL";
-    styleTextNum(clock, "Up to you");
+    styleTextNum(clock, "After review");
     return;
   }
   clock.style.fontSize = "";
@@ -961,8 +989,12 @@ function bindDash() {
     go("s-guest-main"); // host can capture too; their shots stay hidden like everyone's
   });
   const openReveal = () => {
+    if (eventPhase() !== "ended") {
+      toast("REVEAL OPENS AFTER THE EVENT ENDS");
+      return;
+    }
     $("#reveal-sub").textContent =
-      `All ${S.guests.length} guests get the album link by email & SMS. There’s no going back to hidden.`;
+      `All ${S.guests.length} guests get the album link by email & SMS after approval.`;
     $("#sheet-reveal").hidden = false;
   };
   const dashReveal = document.getElementById("btn-reveal");
@@ -978,6 +1010,7 @@ function bindDash() {
 function doReveal() {
   const e = S.event;
   if (!e || e.revealed) return;
+  if (Date.now() < e.end) { toast("REVIEW FIRST AFTER THE EVENT ENDS"); return; }
   e.revealed = true;
   e.revealedAt = Date.now();
   save();
@@ -1010,7 +1043,8 @@ function favBadge() {
 // the framed photo/clip with the disposable look applied via CSS.
 // opts: { who:bool (show capturer name), stamp:bool, raw:bool (original, no filter) }
 function filmEl(m, opts = {}) {
-  const film = el("div", "film" + (opts.raw ? " raw" : ""));
+  const useOriginal = opts.raw || S.event?.cameraStyle === "original";
+  const film = el("div", "film" + (useOriginal ? " raw" : ""));
   const frames = framesOf(m);
   if (m.kind === "clip" && frames.length > 1) {
     const stack = el("div", "clipstack");
@@ -1125,8 +1159,11 @@ function renderLightbox() {
   if (!lbState) return;
   const { m, raw, opts } = lbState;
   const stage = $("#lb-stage");
+  const canToggleRaw = !!opts.host && S.event?.cameraStyle !== "original";
+  if (!canToggleRaw && raw) lbState.raw = false;
   stage.textContent = "";
-  stage.appendChild(filmEl(m, { who: true, raw }));
+  stage.appendChild(filmEl(m, { who: true, raw: canToggleRaw && raw }));
+  $("#lb-toggle").hidden = !canToggleRaw;
   $("#lb-toggle").textContent = raw ? "View filtered" : "View original";
 
   const actions = $("#lb-actions");
@@ -1595,6 +1632,7 @@ function updateCamera() {
   if (currentScreen !== "s-guest-main") return;
   if (recording) return; // never disturb an in-progress recording
   const e = S.event;
+  $("#s-guest-main").classList.toggle("style-original", e?.cameraStyle === "original");
   const phase = eventPhase();
   const lock = $("#vf-lock");
   const cta = $("#vf-lock-cta");
@@ -1617,10 +1655,8 @@ function updateCamera() {
       $("#vf-lock-title").textContent = "Camera locked";
       $("#vf-lock-sub").textContent = `THE EVENT HASN’T STARTED — OPENS IN ${fmtCountdown(e.start - Date.now())}`;
     } else if (phase === "ended") {
-      $("#vf-lock-title").textContent = "Film is developing";
-      $("#vf-lock-sub").textContent = e.unlock === "manual"
-        ? "CAPTURES CLOSED — THE HOST REVEALS WHEN READY"
-        : `CAPTURES CLOSED — REVEAL IN ${fmtCountdown((e.unlock === "time" ? e.revealAt : e.end) - Date.now())}`;
+      $("#vf-lock-title").textContent = "Capture closed";
+      $("#vf-lock-sub").textContent = "THE HOST IS REVIEWING MOMENTS BEFORE REVEAL";
     } else if (phase === "revealed") {
       $("#vf-lock-title").textContent = "The album is open";
       $("#vf-lock-sub").textContent = "CAPTURING HAS ENDED — GO RELIVE IT";
@@ -1893,11 +1929,14 @@ function renderEventTab() {
   } else if (now < e.start) {
     label.textContent = "STARTS IN";
     clock.textContent = fmtCountdown(e.start - now);
+  } else if (now >= e.end) {
+    label.textContent = "REVIEW";
+    styleTextNum(clock, "Waiting for host approval");
   } else if (e.unlock === "manual") {
     label.textContent = "REVEAL";
-    styleTextNum(clock, "When the host decides");
+    styleTextNum(clock, "After host review");
   } else {
-    label.textContent = "REVEAL IN";
+    label.textContent = e.unlock === "time" ? "REVIEW REMINDER" : "CAPTURE ENDS IN";
     clock.textContent = fmtCountdown((e.unlock === "time" ? e.revealAt : e.end) - now);
   }
 }
@@ -1916,6 +1955,11 @@ function renderAlbum() {
   const e = S.event;
   if (!e) return;
   $("#al-name").textContent = e.name;
+  const coverSrc = (e.invite && e.invite.cover) || e.cover;
+  const cover = $("#al-cover");
+  if (coverSrc) { cover.style.backgroundImage = `url(${coverSrc})`; cover.classList.add("has-img"); }
+  else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
+  $("#al-message").textContent = e.hostMessage || "Thanks for an amazing night.";
   const visible = S.moments.filter((m) => !m.removed);
   $("#al-sub").textContent = `${fmtNum(visible.length)} MOMENTS · ${fmtNum(S.guests.length)} GUESTS · ${fmtDT(e.start)}`;
 
@@ -1954,6 +1998,7 @@ function renderAlbum() {
 }
 
 function bindAlbum() {
+  $("#al-cta").addEventListener("click", () => toast("CTA PLACEHOLDER — CONNECT LATER"));
   $("#al-scope").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
@@ -2020,17 +2065,18 @@ function simTick() {
 }
 
 /* ============================================================
-   CLOCK TICK — countdowns, auto-reveal, notifications
+   CLOCK TICK — countdowns, review reminders, notifications
    ============================================================ */
 function tick() {
   const e = S.event;
   if (!e) return;
   const now = Date.now();
 
-  // auto-reveal
-  if (!e.revealed) {
-    if (e.unlock === "end" && now >= e.end) doReveal();
-    else if (e.unlock === "time" && e.revealAt && now >= e.revealAt) doReveal();
+  // Safety: never auto-reveal. Timers only close capture and can remind the host to review.
+  if (!e.revealed && e.unlock === "time" && e.revealAt && now >= e.revealAt && !e.reviewReminderSeen) {
+    e.reviewReminderSeen = true;
+    save();
+    if (S.role === "host") toast("REVIEW REMINDER — APPROVE WHEN READY");
   }
 
   if (currentScreen === "s-host-dash") renderStats();
@@ -2077,6 +2123,7 @@ function boot() {
   bindCreate();
   bindUnlock();
   bindPackage();
+  bindStyle();
   bindShare();
   bindDash();
   bindJoin();

@@ -83,29 +83,29 @@
   <section class="screen light" id="s-host-unlock">
     <div class="screen-pad">
       <button class="back" data-back="s-host-create">←</button>
-      <p class="eyebrow">THE REVEAL · STEP 2 OF 4</p>
-      <h1 class="h1">When does the<br/><em>album open?</em></h1>
-      <p class="sub">Nobody sees a single photo until this moment.</p>
+      <p class="eyebrow">REVEAL SAFETY · STEP 2 OF 5</p>
+      <h1 class="h1">When should we<br/><em>remind you?</em></h1>
+      <p class="sub">Guests never see the album until you review and approve it.</p>
 
       <div class="radio-cards" id="unlock-cards">
         <label class="radio-card">
           <input type="radio" name="unlock" value="end" checked />
           <span class="rc-title">When the event ends</span>
-          <span class="rc-sub">Automatic reveal at the end time</span>
+          <span class="rc-sub">Review reminder when capture closes</span>
         </label>
         <label class="radio-card">
           <input type="radio" name="unlock" value="time" />
           <span class="rc-title">At a chosen time</span>
-          <span class="rc-sub">Pick the exact reveal moment</span>
+          <span class="rc-sub">Pick a reminder time for review</span>
         </label>
         <label class="radio-card">
           <input type="radio" name="unlock" value="manual" />
           <span class="rc-title">When I decide</span>
-          <span class="rc-sub">You press reveal, whenever feels right</span>
+          <span class="rc-sub">No reminder; approve after review</span>
         </label>
       </div>
       <label class="field" id="reveal-time-field" hidden>
-        <span class="field-label">REVEAL AT</span>
+        <span class="field-label">REVIEW REMINDER</span>
         <input type="datetime-local" id="in-revealat" />
       </label>
 
@@ -117,7 +117,7 @@
   <section class="screen light" id="s-host-package">
     <div class="screen-pad">
       <button class="back" data-back="s-host-unlock">←</button>
-      <p class="eyebrow">GUEST PACKAGE · STEP 3 OF 4</p>
+      <p class="eyebrow">GUEST PACKAGE · STEP 3 OF 5</p>
       <h1 class="h1">How many<br/><em>guests?</em></h1>
 
       <div class="pkg-list" id="pkg-list">
@@ -136,14 +136,39 @@
       </div>
 
       <p class="micro">NEED MORE LATER? +10 GUESTS FOR 19 SEK — UPGRADE ANYTIME.</p>
-      <button class="btn solid wide" id="btn-pkg-continue">Create event — free</button>
+      <button class="btn solid wide" id="btn-pkg-continue">Continue →</button>
+    </div>
+  </section>
+
+  <!-- ============ HOST · CAMERA STYLE ============ -->
+  <section class="screen light" id="s-host-style">
+    <div class="screen-pad">
+      <button class="back" data-back="s-host-package">←</button>
+      <p class="eyebrow">CAMERA STYLE · STEP 4 OF 5</p>
+      <h1 class="h1">Choose the<br/><em>camera look</em></h1>
+      <p class="sub">Everyone at the event uses the same style.</p>
+
+      <div class="radio-cards" id="style-cards">
+        <label class="radio-card">
+          <input type="radio" name="cameraStyle" value="vintage" checked />
+          <span class="rc-title">Vintage</span>
+          <span class="rc-sub">Disposable grain, tint, vignette and timestamp.</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="cameraStyle" value="original" />
+          <span class="rc-title">Original</span>
+          <span class="rc-sub">No filter. Photos keep their original colors.</span>
+        </label>
+      </div>
+
+      <button class="btn solid wide" id="btn-style-continue">Create invite →</button>
     </div>
   </section>
 
   <!-- ============ HOST · SHARE ============ -->
   <section class="screen light" id="s-host-share">
     <div class="screen-pad">
-      <p class="eyebrow">STEP 4 OF 4 · YOUR INVITE</p>
+      <p class="eyebrow">STEP 5 OF 5 · YOUR INVITE</p>
       <h1 class="h1">Your<br/><em>invite</em></h1>
       <p class="sub">This is what guests see when you share the event.</p>
 
@@ -272,7 +297,7 @@
         <p class="sub" id="review-count">0 moments</p>
         <p class="micro" id="review-hint">GUESTS STILL CAN’T SEE ANY OF THIS. TAP A PHOTO TO OPEN, OR “SELECT” TO CHOOSE MANY.</p>
         <div class="review-grid" id="review-grid"></div>
-        <button class="btn flash wide" id="btn-reveal-2">Reveal album ✱</button>
+        <button class="btn flash wide" id="btn-reveal-2">Approve &amp; Reveal ✱</button>
       </div>
     </div>
 
@@ -439,7 +464,7 @@
             <p class="stat-num" id="ge-moments">0</p>
           </div>
           <div class="stat">
-            <p class="stat-label" id="ge-clock-label">REVEAL IN</p>
+            <p class="stat-label" id="ge-clock-label">REVIEW</p>
             <p class="stat-num mono-num" id="ge-clock">—</p>
           </div>
           <div class="develop-note"><span class="pulse"></span>Everyone’s capturing. No one’s peeking.</div>
@@ -451,18 +476,21 @@
   <!-- ============ ALBUM (shared) ============ -->
   <section class="screen light" id="s-album">
     <div class="screen-pad slim">
-      <div class="album-head">
-        <div>
+      <div class="album-hero">
+        <div class="album-cover" id="al-cover"></div>
+        <div class="album-hero-copy">
           <p class="eyebrow">THE ALBUM</p>
           <h1 class="h2" id="al-name">—</h1>
+          <p class="album-message" id="al-message">Thanks for an amazing night.</p>
           <p class="micro" id="al-sub">—</p>
+          <button class="btn outline sm" id="al-cta">Next Event</button>
         </div>
         <span class="chip flash-chip">REVEALED ✱</span>
       </div>
       <div class="album-bar">
         <div class="pills" id="al-scope">
-          <button data-scope="all" class="on">All moments</button>
           <button data-scope="mine">My moments</button>
+          <button data-scope="all" class="on">All moments</button>
         </div>
         <div class="pills" id="al-view">
           <button data-view="feed" class="on" title="Feed">☰</button>
@@ -542,8 +570,8 @@
   <div class="sheet">
     <p class="eyebrow">REVEAL THE ALBUM</p>
     <h2 class="h2">Ready to show<br/>everything?</h2>
-    <p class="sub" id="reveal-sub">Every guest gets the album link by email &amp; SMS. There’s no going back to hidden.</p>
-    <button class="btn flash wide" id="reveal-confirm">Reveal now ✱</button>
+    <p class="sub" id="reveal-sub">Guests receive the album link after you approve the reviewed moments.</p>
+    <button class="btn flash wide" id="reveal-confirm">Approve &amp; Reveal ✱</button>
     <button class="linkish" id="reveal-cancel">Not yet</button>
   </div>
 </div>
