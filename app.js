@@ -870,6 +870,32 @@ function renderStats() {
   chip.textContent = { upcoming: "UPCOMING", live: "ONGOING", ended: "REVIEW READY", revealed: "REVEALED" }[phase];
   chip.parentElement?.classList.toggle("is-live", phase === "live");
 
+  const note = $("#dash-note");
+  const camBtn = $("#btn-host-cam");
+  const camLabel = $("#dash-camera-label");
+  const reviewLabel = $("#dash-review-label");
+  if (phase === "live") {
+    note.innerHTML = `<span class="pulse"></span>Film is developing — photos stay hidden until the reveal.`;
+    camBtn.disabled = false;
+    camLabel.textContent = "Camera";
+    reviewLabel.textContent = "Review";
+  } else if (phase === "ended") {
+    note.innerHTML = `<span class="pulse"></span>Capture is closed. Review moments, write the album message, then approve & send.`;
+    camBtn.disabled = true;
+    camLabel.textContent = "Closed";
+    reviewLabel.textContent = "Review album";
+  } else if (phase === "revealed") {
+    note.innerHTML = `<span class="pulse"></span>Album sent. Guests can now view the final event page.`;
+    camBtn.disabled = false;
+    camLabel.textContent = "Album";
+    reviewLabel.textContent = "Album";
+  } else {
+    note.innerHTML = `<span class="pulse"></span>Camera opens when the event starts.`;
+    camBtn.disabled = true;
+    camLabel.textContent = "Locked";
+    reviewLabel.textContent = "Review";
+  }
+
   const label = $("#st-clock-label"), clock = $("#st-clock");
   if (phase === "upcoming") {
     label.textContent = "STARTS IN";
@@ -986,10 +1012,14 @@ function bindDash() {
   $("#btn-review").addEventListener("click", () => go("s-host-review"));
   $("#btn-reshare").addEventListener("click", openQrPop);
   $("#btn-host-cam").addEventListener("click", () => {
+    const phase = eventPhase();
+    if (phase === "revealed") { go("s-album"); return; }
+    if (phase !== "live") { toast("CAMERA CLOSED — REVIEW READY"); return; }
     if (!S.you.name) S.you.name = "Host";
     go("s-guest-main"); // host can capture too; their shots stay hidden like everyone's
   });
   const openReveal = () => {
+    if (eventPhase() === "revealed") { go("s-album"); return; }
     if (eventPhase() !== "ended") {
       toast("REVEAL OPENS AFTER THE EVENT ENDS");
       return;
@@ -1110,9 +1140,23 @@ function updateReviewHeader(total, removed) {
       ? `${reviewSel.size} selected`
       : "Select moments";
     $("#review-hint").textContent = "TAP TO SELECT · THEN FAVOURITE, KEEP OR REMOVE.";
+    return;
+  }
+
+  const phase = eventPhase();
+  $("#review-count").textContent = `${total} moments · ${removed} removed`;
+  const revealBtn = $("#btn-reveal-2");
+  revealBtn.disabled = phase !== "ended";
+  if (phase === "ended") {
+    revealBtn.textContent = "Preview album →";
+    $("#review-hint").textContent = "CAMERA IS CLOSED. REMOVE ANYTHING YOU DON’T WANT SENT, THEN PREVIEW THE FINAL ALBUM.";
+  } else if (phase === "revealed") {
+    revealBtn.disabled = false;
+    revealBtn.textContent = "Open album →";
+    $("#review-hint").textContent = "ALBUM HAS BEEN SENT. YOU CAN STILL VIEW THE FINAL EVENT PAGE.";
   } else {
-    $("#review-count").textContent = `${total} moments · ${removed} removed`;
-    $("#review-hint").textContent = "GUESTS STILL CAN’T SEE ANY OF THIS. TAP “SELECT” TO CHOOSE, FAVOURITE OR REMOVE.";
+    revealBtn.textContent = "Preview after capture closes";
+    $("#review-hint").textContent = "GUESTS STILL CAN’T SEE ANY OF THIS. FINAL SEND UNLOCKS AFTER CAPTURE CLOSES.";
   }
 }
 
