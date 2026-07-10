@@ -231,6 +231,7 @@ const enterHooks = {
   "s-invite-edit": renderShare,
   "s-host-dash": renderDash,
   "s-host-review": enterReview,
+  "s-album-preview": renderAlbumPreview,
   "s-guest-join": renderJoin,
   "s-guest-main": renderGuestMain,
   "s-album": renderAlbum,
@@ -993,11 +994,10 @@ function bindDash() {
       toast("REVEAL OPENS AFTER THE EVENT ENDS");
       return;
     }
-    $("#reveal-sub").textContent =
-      `All ${S.guests.length} guests get the album link by email & SMS after approval.`;
-    $("#reveal-message").value = S.event.hostMessage || "Thanks for an amazing night.";
-    $("#reveal-cta").value = S.event.albumCtaLabel || "Next Event";
-    $("#sheet-reveal").hidden = false;
+    S.event.hostMessage = S.event.hostMessage || "Thanks for an amazing night.";
+    S.event.albumCtaLabel = S.event.albumCtaLabel || "Next Event";
+    save();
+    go("s-album-preview");
   };
   const dashReveal = document.getElementById("btn-reveal");
   if (dashReveal) dashReveal.addEventListener("click", openReveal);
@@ -1146,6 +1146,66 @@ function bindReview() {
   $("#act-remove").addEventListener("click", () => applyToSelected((m) => { m.removed = true; }, "REMOVED"));
 }
 
+function previewVisibleMoments() {
+  return S.moments.filter((m) => !m.removed).sort((a, b) => a.ts - b.ts);
+}
+function syncAlbumPreviewHeader() {
+  const e = S.event;
+  if (!e) return;
+  const message = $("#pv-message-input").value.trim() || "Thanks for an amazing night.";
+  const cta = $("#pv-cta-input").value.trim() || "Next Event";
+  e.hostMessage = message;
+  e.albumCtaLabel = cta;
+  $("#pv-message").textContent = message;
+  $("#pv-cta-preview").textContent = cta;
+  save();
+}
+function renderAlbumPreview() {
+  const e = S.event;
+  if (!e) { go("s-host-create"); return; }
+  $("#pv-name").textContent = e.name;
+  const coverSrc = (e.invite && e.invite.cover) || e.cover;
+  const cover = $("#pv-cover");
+  if (coverSrc) { cover.style.backgroundImage = "url(" + coverSrc + ")"; cover.classList.add("has-img"); }
+  else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
+  const items = previewVisibleMoments();
+  $("#pv-sub").textContent = fmtNum(items.length) + " MOMENTS · " + fmtNum(S.guests.length) + " GUESTS · " + fmtDT(e.start);
+  $("#pv-message-input").value = e.hostMessage || "Thanks for an amazing night.";
+  $("#pv-cta-input").value = e.albumCtaLabel || "Next Event";
+  syncAlbumPreviewHeader();
+
+  const list = $("#pv-list");
+  list.textContent = "";
+  if (!items.length) {
+    list.appendChild(el("p", "empty-note", "The album is empty."));
+    return;
+  }
+  items.forEach((m, i) => {
+    const fig = el("figure", "polaroid");
+    fig.style.animationDelay = Math.min(i, 8) * 0.05 + "s";
+    const ph = el("div", "ph");
+    ph.appendChild(filmEl(m, { who: true }));
+    if (m.kind === "clip") ph.appendChild(el("span", "vid-dot"));
+    if (m.favorite) ph.appendChild(favBadge());
+    fig.appendChild(ph);
+    fig.addEventListener("click", () => openLightbox(m, { host: true }));
+    list.appendChild(fig);
+  });
+}
+function approveAlbumPreview() {
+  if (eventPhase() !== "ended") { toast("REVEAL OPENS AFTER THE EVENT ENDS"); return; }
+  syncAlbumPreviewHeader();
+  save();
+  doReveal();
+}
+function bindAlbumPreview() {
+  $("#pv-back-review").addEventListener("click", () => go("s-host-review"));
+  $("#pv-message-input").addEventListener("input", syncAlbumPreviewHeader);
+  $("#pv-cta-input").addEventListener("input", syncAlbumPreviewHeader);
+  $("#pv-cta-preview").addEventListener("click", () => toast("CTA PLACEHOLDER — CONNECT LATER"));
+  $("#pv-approve").addEventListener("click", approveAlbumPreview);
+  $("#pv-approve-top").addEventListener("click", approveAlbumPreview);
+}
 /* ============================================================
    LIGHTBOX — tap a moment to view it big; toggle filtered / original
    ============================================================ */
@@ -2138,6 +2198,7 @@ function boot() {
   bindLightbox();
   bindRecap();
   bindAlbum();
+  bindAlbumPreview();
   updatePkgBtn();
 
   // keep the app vertical — best effort (works in fullscreen / installed PWA)

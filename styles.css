@@ -1904,3 +1904,18 @@ body::after {
 /* reveal approval fields */
 .reveal-field { margin: 12px 0 0; text-align: left; }
 .reveal-field input { background: var(--paper); }
+
+
+/* album preview editor */
+.preview-hero { margin-top: 16px; }
+.album-edit-panel {
+  border: 1.5px solid var(--ink-15);
+  border-radius: 18px;
+  padding: 14px;
+  margin: 16px 0 12px;
+  background: var(--paper);
+}
+.album-edit-panel .field { margin: 0 0 12px; }
+.album-edit-panel .field:last-child { margin-bottom: 0; }
+.preview-bar { position: static; }
+#pv-approve { margin: 8px 0 28px; }

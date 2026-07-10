@@ -297,7 +297,7 @@
         <p class="sub" id="review-count">0 moments</p>
         <p class="micro" id="review-hint">GUESTS STILL CAN’T SEE ANY OF THIS. TAP A PHOTO TO OPEN, OR “SELECT” TO CHOOSE MANY.</p>
         <div class="review-grid" id="review-grid"></div>
-        <button class="btn flash wide" id="btn-reveal-2">Approve &amp; Reveal ✱</button>
+        <button class="btn flash wide" id="btn-reveal-2">Preview album →</button>
       </div>
     </div>
 
@@ -315,6 +315,53 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13"/></svg>
         <span>Remove</span>
       </button>
+    </div>
+  </section>
+
+  <!-- ============ HOST · ALBUM PREVIEW BEFORE SEND ============ -->
+  <section class="screen light" id="s-album-preview">
+    <div class="screen-pad slim">
+      <div class="review-top">
+        <button class="back" id="pv-back-review">←</button>
+        <button class="review-select" id="pv-approve-top">Approve &amp; Send</button>
+      </div>
+      <p class="eyebrow">FINAL CHECK · HOST ONLY</p>
+      <h1 class="h1">Preview the<br/><em>album</em></h1>
+      <p class="sub">This is what guests receive after you approve it.</p>
+
+      <div class="album-hero preview-hero">
+        <div class="album-cover" id="pv-cover"></div>
+        <div class="album-hero-copy">
+          <p class="eyebrow">THE ALBUM</p>
+          <h1 class="h2" id="pv-name">—</h1>
+          <p class="album-message" id="pv-message">Thanks for an amazing night.</p>
+          <p class="micro" id="pv-sub">—</p>
+          <button class="btn outline sm" id="pv-cta-preview">Next Event</button>
+        </div>
+        <span class="chip flash-chip">PREVIEW</span>
+      </div>
+
+      <div class="album-edit-panel">
+        <label class="field">
+          <span class="field-label">ALBUM MESSAGE</span>
+          <input type="text" id="pv-message-input" maxlength="90" placeholder="Thanks for an amazing night" />
+        </label>
+        <label class="field">
+          <span class="field-label">CTA PLACEHOLDER</span>
+          <input type="text" id="pv-cta-input" maxlength="28" placeholder="Next Event" />
+        </label>
+      </div>
+
+      <div class="album-bar preview-bar">
+        <div class="pills">
+          <button class="on">All moments</button>
+        </div>
+        <div class="pills">
+          <button class="on">☰</button>
+        </div>
+      </div>
+      <div class="album-list" id="pv-list"></div>
+      <button class="btn flash wide" id="pv-approve">Approve &amp; Send to guests ✱</button>
     </div>
   </section>
 
