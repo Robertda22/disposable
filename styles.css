@@ -1899,3 +1899,8 @@ body::after {
 .album-message { margin: 10px 0 8px; font-size: 20px; line-height: 1.25; color: var(--paper); }
 .album-hero #al-cta { margin-top: 10px; color: var(--paper); border-color: var(--paper-40); }
 .album-hero + .album-bar { top: 0; }
+
+
+/* reveal approval fields */
+.reveal-field { margin: 12px 0 0; text-align: left; }
+.reveal-field input { background: var(--paper); }

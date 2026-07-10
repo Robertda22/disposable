@@ -995,6 +995,8 @@ function bindDash() {
     }
     $("#reveal-sub").textContent =
       `All ${S.guests.length} guests get the album link by email & SMS after approval.`;
+    $("#reveal-message").value = S.event.hostMessage || "Thanks for an amazing night.";
+    $("#reveal-cta").value = S.event.albumCtaLabel || "Next Event";
     $("#sheet-reveal").hidden = false;
   };
   const dashReveal = document.getElementById("btn-reveal");
@@ -1002,6 +1004,9 @@ function bindDash() {
   $("#btn-reveal-2").addEventListener("click", openReveal);
   $("#reveal-cancel").addEventListener("click", () => { $("#sheet-reveal").hidden = true; });
   $("#reveal-confirm").addEventListener("click", () => {
+    S.event.hostMessage = $("#reveal-message").value.trim() || "Thanks for an amazing night.";
+    S.event.albumCtaLabel = $("#reveal-cta").value.trim() || "Next Event";
+    save();
     $("#sheet-reveal").hidden = true;
     doReveal();
   });
@@ -1960,6 +1965,7 @@ function renderAlbum() {
   if (coverSrc) { cover.style.backgroundImage = `url(${coverSrc})`; cover.classList.add("has-img"); }
   else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
   $("#al-message").textContent = e.hostMessage || "Thanks for an amazing night.";
+  $("#al-cta").textContent = e.albumCtaLabel || "Next Event";
   const visible = S.moments.filter((m) => !m.removed);
   $("#al-sub").textContent = `${fmtNum(visible.length)} MOMENTS · ${fmtNum(S.guests.length)} GUESTS · ${fmtDT(e.start)}`;
 
