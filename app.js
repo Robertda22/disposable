@@ -1745,6 +1745,7 @@ function updateCamera() {
   const phase = eventPhase();
   const lock = $("#vf-lock");
   const cta = $("#vf-lock-cta");
+  const waitCta = $("#vf-wait-cta");
   const left = Math.max(0, EXPOSURES - myMoments().length);
   setFilmCounter(left);
   $("#vf-stamp").textContent = stampText(Date.now());
@@ -1758,17 +1759,19 @@ function updateCamera() {
     stopCam();
     lock.hidden = false;
     cta.hidden = true;
+    waitCta.hidden = true;
     $("#btn-shutter").disabled = true;
     $("#btn-upload").disabled = true;
     if (phase === "upcoming") {
       $("#vf-lock-title").textContent = "Camera locked";
       $("#vf-lock-sub").textContent = `THE EVENT HASN’T STARTED — OPENS IN ${fmtCountdown(e.start - Date.now())}`;
     } else if (phase === "ended") {
-      $("#vf-lock-title").textContent = "Capture closed";
-      $("#vf-lock-sub").textContent = "THE HOST IS REVIEWING MOMENTS BEFORE REVEAL";
+      $("#vf-lock-title").textContent = "Waiting for host review";
+      $("#vf-lock-sub").textContent = "CAPTURE CLOSED · YOUR MOMENTS ARE SAVED · ALBUM OPENS AFTER APPROVAL";
+      waitCta.hidden = false;
     } else if (phase === "revealed") {
-      $("#vf-lock-title").textContent = "The album is open";
-      $("#vf-lock-sub").textContent = "CAPTURING HAS ENDED — GO RELIVE IT";
+      $("#vf-lock-title").textContent = "Album ready";
+      $("#vf-lock-sub").textContent = "THE HOST APPROVED THE FINAL ALBUM · GO RELIVE IT";
       cta.hidden = false;
     }
   }
@@ -1940,6 +1943,7 @@ function bindCamera() {
   $("#btn-flip").addEventListener("click", flipCam);
   $("#vf-back").addEventListener("click", () => go("s-host-dash"));
   $("#vf-lock-cta").addEventListener("click", () => go("s-album"));
+  $("#vf-wait-cta").addEventListener("click", () => openGallery("moments"));
 
   // moments / event live behind a swipe-up / tap-arrow sheet
   $("#cam-thumb").addEventListener("click", () => openGallery("moments"));
@@ -2201,6 +2205,7 @@ function tick() {
 
   // reveal notification (email/SMS stand-in)
   if (e.revealed && S.role === "guest" && S.you.joined && !S.notifSeen && currentScreen !== "s-album") {
+    $("#notif-body").textContent = `${e.name} album is ready.`;
     $("#notif").hidden = false;
   }
 }
