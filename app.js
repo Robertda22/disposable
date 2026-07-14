@@ -209,7 +209,7 @@ let currentScreen = null;
 let draft = null;          // event being created (pre-payment)
 let coverData = null;
 let albumScope = "all";
-let albumView = "feed";
+let albumView = "grid";
 
 function screenForRole(role) {
   const e = S.event;
@@ -1063,6 +1063,17 @@ function closeQrPop() {
   const pop = $("#qr-pop");
   if (pop) pop.hidden = true;
 }
+async function copyText(text) {
+  try { await navigator.clipboard?.writeText(text); toast("LINK COPIED"); }
+  catch { toast(text); }
+}
+async function shareEventLink(text = "Open the album") {
+  const url = inviteUrl();
+  if (navigator.share) {
+    try { await navigator.share({ title: S.event?.name || "Disposable", text, url }); return; } catch {}
+  }
+  copyText(url);
+}
 
 function bindDash() {
   $("#qr-pop-close").addEventListener("click", closeQrPop);
@@ -1136,32 +1147,6 @@ function deliverySummary() {
   const sent = list.filter((d) => d.status === "prototype sent").length;
   const inApp = list.filter((d) => d.status !== "prototype sent").length;
   return { total: list.length, sent, inApp };
-}
-function renderDeliveryPreview() {
-  const node = $("#pv-delivery");
-  if (!node) return;
-  const existing = S.deliveries && S.deliveries.length ? S.deliveries : null;
-  const planned = existing || S.guests.map((g) => ({
-    name: g.name || "Guest",
-    contact: g.contact || (g.id === "you" ? S.you.contact : "") || "in-app only",
-    channel: deliveryChannel(g.contact || (g.id === "you" ? S.you.contact : "")),
-  }));
-  const sent = existing ? deliverySummary() : null;
-  node.textContent = "";
-  const top = el("div", "delivery-top");
-  top.appendChild(el("p", "eyebrow", existing ? "DELIVERY LOG" : "SEND PLAN"));
-  top.appendChild(el("b", "", existing ? `${sent.sent}/${sent.total} prototype sent` : `${planned.length} guests queued`));
-  node.appendChild(top);
-  const list = el("div", "delivery-list");
-  planned.slice(0, 4).forEach((d) => {
-    const row = el("p", "delivery-row");
-    row.appendChild(el("span", "", d.name));
-    row.appendChild(el("span", "", `${d.channel.toUpperCase()} · ${d.contact || "in-app only"}`));
-    list.appendChild(row);
-  });
-  if (planned.length > 4) list.appendChild(el("p", "delivery-more", `+${planned.length - 4} more guests`));
-  if (sent && sent.inApp) list.appendChild(el("p", "delivery-more warn", `${sent.inApp} guest(s) need real contact before production sending.`));
-  node.appendChild(list);
 }
 function doReveal() {
   const e = S.event;
@@ -1362,7 +1347,6 @@ function renderAlbumPreview() {
   $("#pv-message-input").value = e.hostMessage || "Thanks for an amazing night.";
   $("#pv-cta-input").value = e.albumCtaLabel || "Next Event";
   syncAlbumPreviewHeader();
-  renderDeliveryPreview();
   syncPreviewView("pv", previewAlbumView);
   renderMomentList($("#pv-list"), items, previewAlbumView, { host: true });
 }
@@ -1377,10 +1361,6 @@ function renderAlbumConfirm() {
   $("#cf-name").textContent = e.name;
   $("#cf-message").textContent = e.hostMessage || "Thanks for an amazing night.";
   $("#cf-sub").textContent = fmtNum(items.length) + " MOMENTS · " + fmtNum(S.guests.length) + " GUESTS · " + fmtDT(e.start);
-  renderDeliveryPreview();
-  const from = $("#pv-delivery");
-  const to = $("#cf-delivery");
-  if (from && to) to.innerHTML = from.innerHTML;
   syncPreviewView("cf", confirmAlbumView);
   renderMomentList($("#cf-list"), items, confirmAlbumView, { host: true });
 }
@@ -1468,8 +1448,14 @@ let recapPlaying = false;
 let recapTimer = null, recapRaf = 0;
 let audioCtx = null, arpTimer = null, recapMuted = false;
 
+function recapLimit() {
+  return recapCfg.sec <= 15 ? 5 : 10;
+}
 function recapMoments() {
-  return S.moments.filter((m) => !m.removed).sort((a, b) => a.ts - b.ts).slice(0, 14);
+  const visible = S.moments.filter((m) => !m.removed);
+  const favs = visible.filter((m) => m.favorite).sort((a, b) => a.ts - b.ts);
+  const rest = visible.filter((m) => !m.favorite).sort((a, b) => a.ts - b.ts);
+  return [...favs, ...rest].slice(0, recapLimit());
 }
 
 function openRecap() {
@@ -1477,7 +1463,9 @@ function openRecap() {
   $("#recap").hidden = false;
   $("#recap-controls").hidden = false;
   $("#recap-progress").hidden = true;
-  $("#recap-play").textContent = "▶ Play recap";
+  $("#recap-play").textContent = "▶ Mix preview";
+  $("#recap-export").hidden = true;
+  $("#recap-export-panel").hidden = true;
   syncRecapControls();
   posterRecap();
 }
@@ -1497,9 +1485,27 @@ function posterRecap() {
     s.style.opacity = "0.5";
     stage.appendChild(s);
   }
-  showCard("RECAP FILM", S.event?.name || "", `${recapCfg.sec}s · ${ms.length} MOMENTS`);
+  drawRecapOrbit(ms);
+  showCard("RECAP FILM", S.event?.name || "", `${recapCfg.sec}s · ${ms.length}/${recapLimit()} MOMENTS`);
 }
 
+function drawRecapOrbit(ms) {
+  const stage = $("#recap-stage");
+  const orb = el("button", "recap-orb", "▶");
+  orb.type = "button";
+  orb.setAttribute("aria-label", "Mix recap preview");
+  orb.addEventListener("click", recapPlay);
+  stage.appendChild(orb);
+  ms.slice(0, 8).forEach((m, i) => {
+    const frames = framesOf(m);
+    if (!frames[0]) return;
+    const t = el("img", "recap-fly");
+    t.src = frames[0];
+    t.alt = "";
+    t.style.setProperty("--i", i);
+    stage.appendChild(t);
+  });
+}
 function showCard(eyebrow, title, sub) {
   const c = $("#recap-card");
   c.textContent = "";
@@ -1554,7 +1560,7 @@ function recapPlay() {
       recapTimer = setTimeout(advance, per);
     } else {
       const vis = S.moments.filter((m) => !m.removed).length;
-      showCard("THAT’S A WRAP", S.event.name, `${vis} MOMENTS · ${S.guests.length} GUESTS`);
+      showCard("PREVIEW READY", S.event.name, `${vis} MOMENTS · EXPORT WHEN READY`);
       recapTimer = setTimeout(recapFinish, endMs);
     }
   };
@@ -1566,7 +1572,8 @@ function recapFinish() {
   stopMusic();
   $("#recap-controls").hidden = false;
   $("#recap-progress").hidden = true;
-  $("#recap-play").textContent = "↻ Play again";
+  $("#recap-play").textContent = "↻ Mix again";
+  $("#recap-export").hidden = false;
 }
 function recapStop() {
   recapPlaying = false;
@@ -1649,13 +1656,26 @@ function bindRecap() {
     if (recapMuted) stopMusic();
     else if (recapPlaying) startMusic(recapCfg.vibe);
   });
+  $("#recap-pick").addEventListener("click", () => {
+    closeRecap();
+    go("s-host-review");
+    toast("FAVOURITE MOMENTS TO STEER THE RECAP");
+  });
+  $("#recap-export").addEventListener("click", () => {
+    $("#recap-export").hidden = true;
+    $("#recap-export-panel").hidden = false;
+    toast("RECAP EXPORTED FOR THIS PROTOTYPE");
+  });
+  $("#recap-copy").addEventListener("click", () => copyText(inviteUrl()));
   $("#recap-share").addEventListener("click", () => {
-    toast(`RECAP SHARED WITH ${S.guests.length} GUESTS`);
+    toast(`RECAP READY TO SHARE WITH ${S.guests.length} GUESTS`);
   });
   $("#recap-len").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
     recapCfg.sec = +b.dataset.sec;
     syncRecapControls();
+    $("#recap-export").hidden = true;
+    $("#recap-export-panel").hidden = true;
     posterRecap();
   });
   $("#recap-music").addEventListener("click", (e) => {
@@ -2236,6 +2256,8 @@ function renderAlbum() {
 
   const isHost = S.role === "host";
   $("#btn-recap").hidden = !isHost; // only the host builds the recap film
+  const shareCard = $("#album-share-card");
+  if (shareCard) shareCard.hidden = !isHost;
   $("#al-scope").style.display = isHost ? "none" : "flex";
   if (isHost) albumScope = "all";
   if (!albumView) albumView = "grid";
@@ -2271,6 +2293,12 @@ function renderAlbum() {
 
 function bindAlbum() {
   $("#al-cta").addEventListener("click", () => toast("CTA PLACEHOLDER — CONNECT LATER"));
+  const copyAlbum = $("#al-copy");
+  if (copyAlbum) copyAlbum.addEventListener("click", () => copyText(inviteUrl()));
+  const shareAlbum = $("#al-share");
+  if (shareAlbum) shareAlbum.addEventListener("click", () => shareEventLink("Open the album"));
+  const qrAlbum = $("#al-show-qr");
+  if (qrAlbum) qrAlbum.addEventListener("click", openQrPop);
   $("#al-scope").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;

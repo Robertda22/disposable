@@ -2152,7 +2152,6 @@ body::after {
 .centered-copy { text-align: center; margin: 0 auto; max-width: 92%; }
 .centered-copy .album-message { max-width: 320px; margin-left: auto; margin-right: auto; }
 .preview-hero .flash-chip { display: none; }
-.clean-delivery, #pv-delivery { text-align: center; }
 .delivery-top.simple { justify-content: center; flex-direction: column; align-items: center; gap: 4px; }
 .delivery-top.simple b { font-size: 18px; }
 .confirm-actions { display: grid; grid-template-columns: .8fr 1.2fr; gap: 10px; }
@@ -2170,3 +2169,108 @@ body::after {
 .preview-bar .pills button { min-width: 42px; }
 .qr-pop { position: fixed; z-index: 12000; }
 .dash-action:focus { outline: none; }
+
+/* final album send cleanup */
+.album-section-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-55);
+}
+.album-share-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1.5px solid var(--ink-12);
+  border-radius: 20px;
+  padding: 13px;
+  margin: -4px 0 12px;
+  background: rgba(255,255,255,0.58);
+}
+.album-share-card[hidden] { display: none; }
+.album-share-card .eyebrow { margin: 0 0 3px; }
+.album-share-actions { display: flex; gap: 7px; }
+.album-share-actions .mini-action { padding: 10px 11px; font-size: 9px; }
+.preview-hero .album-cover.has-img { opacity: 0.94; }
+.preview-hero .album-cover::after { background: linear-gradient(180deg, rgba(15,13,9,0.12), rgba(15,13,9,0.7)); }
+#cf-list.grid, #pv-list.grid, #album-list.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+#cf-list.grid .polaroid, #pv-list.grid .polaroid, #album-list.grid .polaroid { padding: 0; border: 0; background: transparent; border-radius: 14px; overflow: hidden; }
+#cf-list.grid .polaroid .ph, #pv-list.grid .polaroid .ph, #album-list.grid .polaroid .ph { border-radius: 14px; }
+#cf-list.grid .film .stamp, #pv-list.grid .film .stamp, #album-list.grid .film .stamp { display: none; }
+#s-album-confirm .preview-hero { min-height: 320px; }
+#s-album-confirm .sticky-approve-row { background: var(--paper); padding: 10px 0 0; }
+
+/* recap builder polish */
+.recap-row { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 12px; }
+.recap-row .field-label { width: auto; }
+.recap .chips { display: flex; gap: 8px; }
+.recap .chips button {
+  min-height: 42px;
+  min-width: 72px;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font: 800 13px/1 var(--font-mono);
+}
+.recap-picker {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 16px;
+  border: 1.5px solid var(--paper-24);
+  background: rgba(255,255,255,0.06);
+  color: var(--paper);
+  font: 800 10px/1 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.recap-export-panel {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  border: 1.5px solid var(--paper-18);
+  border-radius: 18px;
+  padding: 10px;
+  background: rgba(255,255,255,0.08);
+}
+.recap-export-panel[hidden] { display: none; }
+.recap-export-panel .eyebrow { margin: 0; color: var(--paper-70); }
+.recap-export-panel .mini-action { color: var(--paper); border-color: var(--paper-30); }
+.recap-orb {
+  position: absolute;
+  left: 50%; top: 48%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  width: 82px; height: 82px;
+  border-radius: 50%;
+  border: 1.5px solid var(--paper-24);
+  background: rgba(255,255,255,0.12);
+  color: var(--paper);
+  font-size: 30px;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+}
+.recap-fly {
+  --angle: calc(var(--i) * 45deg);
+  position: absolute;
+  left: 50%; top: 48%;
+  width: 52px; height: 68px;
+  object-fit: cover;
+  border-radius: 12px;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-178px) rotate(calc(var(--angle) * -1));
+  opacity: 0.44;
+  animation: recapAbsorb 4.8s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.42s);
+}
+@keyframes recapAbsorb {
+  0%, 100% { transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-178px) rotate(calc(var(--angle) * -1)) scale(1); opacity: .42; }
+  55% { transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-42px) rotate(calc(var(--angle) * -1)) scale(.45); opacity: .08; }
+}

@@ -365,19 +365,15 @@
         </label>
       </div>
 
-      <div class="delivery-card" id="pv-delivery"></div>
-
       <div class="album-bar preview-bar">
-        <div class="pills">
-          <button class="on" id="pv-all" type="button">All moments</button>
-        </div>
+        <p class="album-section-label">Album moments</p>
         <div class="pills" id="pv-view">
           <button data-view="grid" class="on" title="Grid" type="button">▦</button>
           <button data-view="feed" title="Feed" type="button">☰</button>
         </div>
       </div>
       <div class="album-list grid" id="pv-list"></div>
-      <button class="btn flash wide sticky-approve" id="pv-approve">Preview guest album →</button>
+      <button class="btn flash wide sticky-approve" id="pv-approve">Preview album →</button>
     </div>
   </section>
 
@@ -388,7 +384,7 @@
         <button class="back" id="cf-back-edit">←</button>
       </div>
       <p class="eyebrow center">READY TO SEND</p>
-      <h1 class="h1 center">Guest<br/><em>preview</em></h1>
+      <h1 class="h1 center">Final<br/><em>check</em></h1>
 
       <div class="album-hero preview-hero">
         <div class="album-cover" id="cf-cover"></div>
@@ -400,12 +396,8 @@
         </div>
       </div>
 
-      <div class="delivery-card clean-delivery" id="cf-delivery"></div>
-
       <div class="album-bar preview-bar">
-        <div class="pills">
-          <button class="on" type="button">All moments</button>
-        </div>
+        <p class="album-section-label">Album moments</p>
         <div class="pills" id="cf-view">
           <button data-view="grid" class="on" title="Grid" type="button">▦</button>
           <button data-view="feed" title="Feed" type="button">☰</button>
@@ -414,7 +406,7 @@
       <div class="album-list grid" id="cf-list"></div>
       <div class="confirm-actions sticky-approve-row">
         <button class="btn outline wide" id="cf-edit">Edit</button>
-        <button class="btn flash wide" id="cf-send">Approve &amp; Send ✱</button>
+        <button class="btn flash wide" id="cf-send">Send album ✱</button>
       </div>
     </div>
   </section>
@@ -590,14 +582,25 @@
         </div>
         <span class="chip flash-chip">REVEALED ✱</span>
       </div>
+      <div class="album-share-card" id="album-share-card" hidden>
+        <div>
+          <p class="eyebrow">ALBUM LINK</p>
+          <strong>Share manually</strong>
+        </div>
+        <div class="album-share-actions">
+          <button class="mini-action" id="al-copy" type="button">Copy link</button>
+          <button class="mini-action" id="al-share" type="button">Share</button>
+          <button class="mini-action" id="al-show-qr" type="button">QR</button>
+        </div>
+      </div>
       <div class="album-bar">
         <div class="pills" id="al-scope">
           <button data-scope="mine">My moments</button>
           <button data-scope="all" class="on">All moments</button>
         </div>
         <div class="pills" id="al-view">
-          <button data-view="feed" class="on" title="Feed">☰</button>
-          <button data-view="grid" title="Grid">▦</button>
+          <button data-view="grid" class="on" title="Grid">▦</button>
+          <button data-view="feed" title="Feed">☰</button>
         </div>
       </div>
       <button class="btn solid wide" id="btn-recap" hidden>✦ Create recap film</button>
@@ -627,8 +630,14 @@
           <button id="recap-music-toggle" data-vibe="none">Add music</button>
         </div>
       </div>
-      <button class="btn flash wide" id="recap-play">▶ Play recap</button>
-      <button class="btn ghost wide" id="recap-share">Share with everyone</button>
+      <button class="recap-picker" id="recap-pick" type="button">Choose moments · favourites first</button>
+      <button class="btn flash wide" id="recap-play">▶ Mix preview</button>
+      <button class="btn ghost wide" id="recap-export" hidden>Export recap</button>
+      <div class="recap-export-panel" id="recap-export-panel" hidden>
+        <p class="eyebrow">RECAP EXPORTED</p>
+        <button class="mini-action" id="recap-copy" type="button">Copy link</button>
+        <button class="mini-action" id="recap-share" type="button">Share recap</button>
+      </div>
     </div>
   </div>
 
