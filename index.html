@@ -591,6 +591,7 @@
           <button class="mini-action" id="al-copy" type="button">Copy link</button>
           <button class="mini-action" id="al-share" type="button">Share</button>
           <button class="mini-action" id="al-show-qr" type="button">QR</button>
+          <button class="mini-action" id="al-home" type="button">Home</button>
         </div>
       </div>
       <div class="album-bar">
@@ -615,28 +616,23 @@
     <div class="recap-progress" id="recap-progress" hidden><i id="recap-bar"></i></div>
     <div class="recap-top">
       <button class="lb-btn" id="recap-close" aria-label="Close">✕</button>
-      <span class="recap-label">RECAP FILM</span>
-      <button class="lb-btn" id="recap-mute" aria-label="Mute">♪</button>
+      <span class="recap-label">RECAP</span>
+      <button class="lb-btn wide" id="recap-top-export" hidden>Export</button>
     </div>
     <div class="recap-controls" id="recap-controls">
-      <div class="recap-row"><span class="field-label dim">LENGTH</span>
-        <div class="chips" id="recap-len">
+      <div class="recap-glass-row">
+        <div class="recap-length" id="recap-len">
           <button data-sec="15" class="on">15s</button>
           <button data-sec="30">30s</button>
         </div>
+        <button class="recap-music-toggle" id="recap-music-toggle" data-vibe="none" type="button" aria-label="Toggle music">♪ off</button>
       </div>
-      <div class="recap-row"><span class="field-label dim">MUSIC</span>
-        <div class="chips" id="recap-music">
-          <button id="recap-music-toggle" data-vibe="none">Add music</button>
-        </div>
-      </div>
-      <button class="recap-picker" id="recap-pick" type="button">Choose moments · favourites first</button>
-      <button class="btn flash wide" id="recap-play">▶ Mix preview</button>
-      <button class="btn ghost wide" id="recap-export" hidden>Export recap</button>
+      <p class="recap-helper" id="recap-helper">Tap + to choose moments, or let it auto mix.</p>
+      <button class="btn flash wide" id="recap-play">Auto make movie</button>
       <div class="recap-export-panel" id="recap-export-panel" hidden>
-        <p class="eyebrow">RECAP EXPORTED</p>
+        <button class="btn ghost wide" id="recap-export" type="button">Export recap</button>
         <button class="mini-action" id="recap-copy" type="button">Copy link</button>
-        <button class="mini-action" id="recap-share" type="button">Share recap</button>
+        <button class="mini-action" id="recap-share" type="button">Share</button>
       </div>
     </div>
   </div>

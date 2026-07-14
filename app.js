@@ -210,6 +210,8 @@ let draft = null;          // event being created (pre-payment)
 let coverData = null;
 let albumScope = "all";
 let albumView = "grid";
+let previewAlbumView = "grid";
+let confirmAlbumView = "grid";
 
 function screenForRole(role) {
   const e = S.event;
@@ -236,6 +238,7 @@ const enterHooks = {
   "s-host-dash": renderDash,
   "s-host-review": enterReview,
   "s-album-preview": renderAlbumPreview,
+  "s-album-confirm": renderAlbumConfirm,
   "s-guest-join": renderJoin,
   "s-guest-main": renderGuestMain,
   "s-album": renderAlbum,
@@ -1169,11 +1172,14 @@ function doReveal() {
    HOST · REVIEW — iOS Photos-style multi-select
    ============================================================ */
 let reviewSelecting = false;
+let recapPickMode = false;
 const reviewSel = new Set();
 
 function enterReview() {
-  reviewSelecting = false;
-  reviewSel.clear();
+  if (!recapPickMode) {
+    reviewSelecting = false;
+    reviewSel.clear();
+  }
   renderReview();
 }
 
@@ -1212,12 +1218,13 @@ function renderReview() {
   const grid = $("#review-grid");
   grid.textContent = "";
   grid.classList.toggle("selecting", reviewSelecting);
+  $("#s-host-review").classList.toggle("recap-picking", recapPickMode);
   const ms = [...S.moments].reverse();
   const removed = ms.filter((m) => m.removed).length;
 
-  $("#btn-review-select").textContent = reviewSelecting ? "Done" : "Select";
+  $("#btn-review-select").textContent = recapPickMode ? "Done" : (reviewSelecting ? "Done" : "Select");
   $("#btn-reveal-2").style.display = reviewSelecting ? "none" : "";
-  $("#select-bar").hidden = !(reviewSelecting && reviewSel.size > 0);
+  $("#select-bar").hidden = recapPickMode || !(reviewSelecting && reviewSel.size > 0);
   updateReviewHeader(ms.length, removed);
 
   if (!ms.length) {
@@ -1244,11 +1251,17 @@ function renderReview() {
 }
 
 function updateReviewHeader(total, removed) {
+  if (recapPickMode) {
+    const max = recapLimit();
+    $("#review-count").textContent = `${reviewSel.size}/${max} selected`;
+    $("#review-hint").textContent = `PICK UP TO ${max} MOMENTS FOR THE RECAP. TAP DONE WHEN READY.`;
+    return;
+  }
   if (reviewSelecting) {
     $("#review-count").textContent = reviewSel.size
       ? `${reviewSel.size} selected`
       : "Select moments";
-    $("#review-hint").textContent = "TAP TO SELECT · THEN FAVOURITE, KEEP OR REMOVE.";
+    $("#review-hint").textContent = "TAP TO SELECT · THEN FAVOURITE OR REMOVE.";
     return;
   }
 
@@ -1271,11 +1284,14 @@ function updateReviewHeader(total, removed) {
 
 function toggleSel(id, item) {
   if (reviewSel.has(id)) reviewSel.delete(id);
-  else reviewSel.add(id);
+  else {
+    if (recapPickMode && reviewSel.size >= recapLimit()) { toast(`MAX ${recapLimit()} MOMENTS FOR THIS RECAP`); return; }
+    reviewSel.add(id);
+  }
   item.classList.toggle("selected", reviewSel.has(id));
   const ms = S.moments;
   updateReviewHeader(ms.length, ms.filter((m) => m.removed).length);
-  $("#select-bar").hidden = reviewSel.size === 0; // only shows with a selection
+  $("#select-bar").hidden = recapPickMode || reviewSel.size === 0; // only shows with a selection
 }
 
 function applyToSelected(fn, word) {
@@ -1288,8 +1304,27 @@ function applyToSelected(fn, word) {
   toast(`${n} ${word}`);
 }
 
+function finishRecapPick() {
+  const picked = new Set(reviewSel);
+  S.moments.forEach((m) => { if (!m.removed) m.favorite = picked.has(m.id); });
+  save();
+  recapPickMode = false;
+  reviewSelecting = false;
+  reviewSel.clear();
+  go("s-album");
+  openRecap();
+  toast("RECAP MOMENTS SET");
+}
+function startRecapPick() {
+  recapPickMode = true;
+  reviewSelecting = true;
+  reviewSel.clear();
+  S.moments.filter((m) => m.favorite && !m.removed).slice(0, recapLimit()).forEach((m) => reviewSel.add(m.id));
+  go("s-host-review");
+}
 function bindReview() {
   $("#btn-review-select").addEventListener("click", () => {
+    if (recapPickMode) { finishRecapPick(); return; }
     reviewSelecting = !reviewSelecting;
     reviewSel.clear();
     renderReview();
@@ -1449,7 +1484,7 @@ let recapTimer = null, recapRaf = 0;
 let audioCtx = null, arpTimer = null, recapMuted = false;
 
 function recapLimit() {
-  return recapCfg.sec <= 15 ? 5 : 10;
+  return recapCfg.sec <= 15 ? 8 : 14;
 }
 function recapMoments() {
   const visible = S.moments.filter((m) => !m.removed);
@@ -1463,8 +1498,8 @@ function openRecap() {
   $("#recap").hidden = false;
   $("#recap-controls").hidden = false;
   $("#recap-progress").hidden = true;
-  $("#recap-play").textContent = "▶ Mix preview";
-  $("#recap-export").hidden = true;
+  $("#recap-play").textContent = "Auto make movie";
+  $("#recap-top-export").hidden = false;
   $("#recap-export-panel").hidden = true;
   syncRecapControls();
   posterRecap();
@@ -1486,15 +1521,16 @@ function posterRecap() {
     stage.appendChild(s);
   }
   drawRecapOrbit(ms);
-  showCard("RECAP FILM", S.event?.name || "", `${recapCfg.sec}s · ${ms.length}/${recapLimit()} MOMENTS`);
+  hideCard();
+  updateRecapHelper(ms);
 }
 
 function drawRecapOrbit(ms) {
   const stage = $("#recap-stage");
-  const orb = el("button", "recap-orb", "▶");
+  const orb = el("button", "recap-orb", "+");
   orb.type = "button";
-  orb.setAttribute("aria-label", "Mix recap preview");
-  orb.addEventListener("click", recapPlay);
+  orb.setAttribute("aria-label", "Choose recap moments");
+  orb.addEventListener("click", startRecapPick);
   stage.appendChild(orb);
   ms.slice(0, 8).forEach((m, i) => {
     const frames = framesOf(m);
@@ -1505,6 +1541,19 @@ function drawRecapOrbit(ms) {
     t.style.setProperty("--i", i);
     stage.appendChild(t);
   });
+}
+function updateRecapHelper(ms = recapMoments()) {
+  const helper = $("#recap-helper");
+  if (helper) helper.textContent = `${recapCfg.sec}s · ${ms.length}/${recapLimit()} selected · tap + to choose`;
+}
+function exportRecap() {
+  recapStop();
+  $("#recap-controls").hidden = false;
+  $("#recap-progress").hidden = true;
+  $("#recap-export-panel").hidden = false;
+  $("#recap-top-export").hidden = true;
+  $("#recap-play").textContent = "Mix again";
+  showCard("EXPORTED", S.event?.name || "Recap", "Ready to share");
 }
 function showCard(eyebrow, title, sub) {
   const c = $("#recap-card");
@@ -1522,6 +1571,7 @@ function recapPlay() {
   recapStop();
   recapPlaying = true;
   $("#recap-controls").hidden = true;
+  $("#recap-top-export").hidden = false;
   $("#recap-progress").hidden = false;
   startMusic(recapCfg.vibe);
 
@@ -1548,7 +1598,7 @@ function recapPlay() {
   };
   recapRaf = requestAnimationFrame(tick);
 
-  showCard("THE RECAP", S.event.name, inviteDateStr(S.event));
+  showCard("", "", "");
   let idx = 0;
   const advance = () => {
     if (!recapPlaying) return;
@@ -1560,7 +1610,7 @@ function recapPlay() {
       recapTimer = setTimeout(advance, per);
     } else {
       const vis = S.moments.filter((m) => !m.removed).length;
-      showCard("PREVIEW READY", S.event.name, `${vis} MOMENTS · EXPORT WHEN READY`);
+      showCard("PREVIEW READY", S.event.name, `${vis} MOMENTS`);
       recapTimer = setTimeout(recapFinish, endMs);
     }
   };
@@ -1572,8 +1622,9 @@ function recapFinish() {
   stopMusic();
   $("#recap-controls").hidden = false;
   $("#recap-progress").hidden = true;
-  $("#recap-play").textContent = "↻ Mix again";
-  $("#recap-export").hidden = false;
+  $("#recap-play").textContent = "Mix again";
+  $("#recap-top-export").hidden = false;
+  $("#recap-export-panel").hidden = false;
 }
 function recapStop() {
   recapPlaying = false;
@@ -1641,31 +1692,17 @@ function syncRecapControls() {
   const on = recapCfg.vibe !== "none";
   b.classList.toggle("on", on);
   b.dataset.vibe = recapCfg.vibe;
-  b.textContent = on ? "Music on" : "Add music";
-  $$("#recap-len button").forEach((x) => x.classList.toggle("on", +x.dataset.sec === recapCfg.sec));
+  b.textContent = on ? "♪ on" : "♪ off";
+  $("#recap-len button").forEach((x) => x.classList.toggle("on", +x.dataset.sec === recapCfg.sec));
+  updateRecapHelper();
 }
 
 function bindRecap() {
   $("#btn-recap").addEventListener("click", openRecap);
   $("#recap-close").addEventListener("click", closeRecap);
   $("#recap-play").addEventListener("click", recapPlay);
-  $("#recap-mute").addEventListener("click", () => {
-    recapMuted = !recapMuted;
-    $("#recap-mute").textContent = recapMuted ? "♪̸" : "♪";
-    $("#recap-mute").style.opacity = recapMuted ? "0.5" : "1";
-    if (recapMuted) stopMusic();
-    else if (recapPlaying) startMusic(recapCfg.vibe);
-  });
-  $("#recap-pick").addEventListener("click", () => {
-    closeRecap();
-    go("s-host-review");
-    toast("FAVOURITE MOMENTS TO STEER THE RECAP");
-  });
-  $("#recap-export").addEventListener("click", () => {
-    $("#recap-export").hidden = true;
-    $("#recap-export-panel").hidden = false;
-    toast("RECAP EXPORTED FOR THIS PROTOTYPE");
-  });
+  $("#recap-top-export").addEventListener("click", exportRecap);
+  $("#recap-export").addEventListener("click", exportRecap);
   $("#recap-copy").addEventListener("click", () => copyText(inviteUrl()));
   $("#recap-share").addEventListener("click", () => {
     toast(`RECAP READY TO SHARE WITH ${S.guests.length} GUESTS`);
@@ -1674,12 +1711,10 @@ function bindRecap() {
     const b = e.target.closest("button"); if (!b) return;
     recapCfg.sec = +b.dataset.sec;
     syncRecapControls();
-    $("#recap-export").hidden = true;
     $("#recap-export-panel").hidden = true;
     posterRecap();
   });
-  $("#recap-music").addEventListener("click", (e) => {
-    const b = e.target.closest("button"); if (!b) return;
+  $("#recap-music-toggle").addEventListener("click", () => {
     recapCfg.vibe = recapCfg.vibe === "none" ? "warm" : "none";
     syncRecapControls();
   });
@@ -2299,6 +2334,8 @@ function bindAlbum() {
   if (shareAlbum) shareAlbum.addEventListener("click", () => shareEventLink("Open the album"));
   const qrAlbum = $("#al-show-qr");
   if (qrAlbum) qrAlbum.addEventListener("click", openQrPop);
+  const homeAlbum = $("#al-home");
+  if (homeAlbum) homeAlbum.addEventListener("click", () => go("s-host-dash"));
   $("#al-scope").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
@@ -2402,7 +2439,10 @@ function tick() {
 function bindChrome() {
   $$("#role-toggle button").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));
   $$("[data-go-role]").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.goRole)));
-  $$("[data-back]").forEach((b) => b.addEventListener("click", () => go(b.dataset.back)));
+  $("[data-back]").forEach((b) => b.addEventListener("click", () => {
+    if (recapPickMode) { recapPickMode = false; reviewSelecting = false; reviewSel.clear(); go("s-album"); return; }
+    go(b.dataset.back);
+  }));
   $("#btn-reset").addEventListener("click", () => {
     if (confirm("Reset the demo? This clears the event and every moment.")) {
       localStorage.removeItem(KEY);

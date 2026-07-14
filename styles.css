@@ -2274,3 +2274,91 @@ body::after {
   0%, 100% { transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-178px) rotate(calc(var(--angle) * -1)) scale(1); opacity: .42; }
   55% { transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-42px) rotate(calc(var(--angle) * -1)) scale(.45); opacity: .08; }
 }
+
+/* recap v2 cleanup */
+.recap-top .recap-label { letter-spacing: 0.24em; }
+#recap-top-export { color: var(--paper); border-color: var(--paper-24); background: rgba(255,255,255,0.08); backdrop-filter: blur(14px); }
+#recap-top-export[hidden] { display: none; }
+#recap-mute { display: none; }
+.recap-card { background: transparent; }
+.recap-card .rc-eyebrow:empty, .recap-card .rc-title:empty, .recap-card .rc-sub:empty { display: none; }
+.recap-glass-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.recap-length {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(18px);
+}
+.recap-length button, .recap-music-toggle {
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255,255,255,0.72);
+  background: transparent;
+  font: 800 12px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.recap-length button.on {
+  color: var(--ink);
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+}
+.recap-music-toggle {
+  min-width: 78px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(18px);
+}
+.recap-music-toggle.on { color: #b9ff8c; border-color: rgba(185,255,140,0.42); background: rgba(100,255,130,0.12); }
+.recap-helper {
+  margin: 0;
+  text-align: center;
+  color: var(--paper-50);
+  font: 800 10px/1.4 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.recap-controls { padding-top: 38px; }
+.recap-orb {
+  top: 43%;
+  width: 74px; height: 74px;
+  font-size: 42px;
+  line-height: 1;
+  background: rgba(255,255,255,0.16);
+}
+.recap-fly { top: 43%; }
+.recap-export-panel {
+  grid-template-columns: 1fr auto auto;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.recap-export-panel .btn { min-height: 52px; }
+.recap-export-panel .mini-action { min-width: 78px; border-radius: 18px; }
+#pv-list.grid, #cf-list.grid {
+  min-height: 190px;
+  max-height: 280px;
+  overflow: auto;
+  align-content: start;
+  padding-bottom: 18px;
+}
+#pv-list.grid .polaroid .ph, #cf-list.grid .polaroid .ph { aspect-ratio: 1; }
+#s-host-review.recap-picking #btn-reveal-2 { display: none !important; }
+#s-host-review.recap-picking .review-top { position: sticky; top: 0; z-index: 10; background: var(--paper); padding-top: 4px; }
+
+/* review CTA should sit after the grid, not float over it */
+#btn-reveal-2 {
+  position: static;
+  margin: 24px 0 28px;
+}
