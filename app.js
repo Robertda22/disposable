@@ -83,6 +83,7 @@ function initialState() {
     you: { joined: false },
     simRequest: null,     // scripted request {name}
     request: null,        // real guest request {name, contact}
+    deliveries: [],      // prototype reveal delivery manifest {guestId, name, contact, channel, status, sentAt}
     requestDone: false,
     notifSeen: false,
   };
@@ -481,6 +482,7 @@ function bindExposures() {
     const basePrice = draft.pkgPrice || 0;
     const totalPrice = basePrice + exposurePrice;
     const finalize = () => {
+      S.deliveries = [];
       S.event = {
         ...draft,
         pkg: draft.pkg || "free",
@@ -491,6 +493,7 @@ function bindExposures() {
         revealed: false,
         revealedAt: null,
         reviewReminderSeen: false,
+        deliveryStatus: "draft",
       };
       delete S.event.pkgPrice;
       delete S.event.pkgLabel;
@@ -1030,7 +1033,7 @@ function acceptRequest(kind) {
       S.simRequest = null;
     } else {
       S.you.joined = true;
-      if (!S.guests.find((g) => g.id === "you")) S.guests.push({ id: "you", name: S.you.name });
+      if (!S.guests.find((g) => g.id === "you")) S.guests.push({ id: "you", name: S.you.name, contact: S.you.contact || S.request?.contact || "" });
       toast(`✓ ${(S.you.name || "GUEST").toUpperCase()} JOINED`);
       S.request = null;
     }
@@ -1105,15 +1108,73 @@ function bindDash() {
   });
 }
 
+function deliveryChannel(contact) {
+  const value = String(contact || "").trim();
+  if (!value) return "in-app";
+  return value.includes("@") ? "email" : "sms";
+}
+function buildDeliveryManifest() {
+  const now = Date.now();
+  const albumUrl = inviteUrl();
+  return S.guests.map((g) => {
+    const contact = g.contact || (g.id === "you" ? S.you.contact : "");
+    const channel = deliveryChannel(contact);
+    return {
+      id: uid(),
+      guestId: g.id,
+      name: g.name || "Guest",
+      contact: contact || "in-app only",
+      channel,
+      status: channel === "in-app" ? "needs contact" : "prototype sent",
+      albumUrl,
+      sentAt: now,
+    };
+  });
+}
+function deliverySummary() {
+  const list = S.deliveries || [];
+  const sent = list.filter((d) => d.status === "prototype sent").length;
+  const inApp = list.filter((d) => d.status !== "prototype sent").length;
+  return { total: list.length, sent, inApp };
+}
+function renderDeliveryPreview() {
+  const node = $("#pv-delivery");
+  if (!node) return;
+  const existing = S.deliveries && S.deliveries.length ? S.deliveries : null;
+  const planned = existing || S.guests.map((g) => ({
+    name: g.name || "Guest",
+    contact: g.contact || (g.id === "you" ? S.you.contact : "") || "in-app only",
+    channel: deliveryChannel(g.contact || (g.id === "you" ? S.you.contact : "")),
+  }));
+  const sent = existing ? deliverySummary() : null;
+  node.textContent = "";
+  const top = el("div", "delivery-top");
+  top.appendChild(el("p", "eyebrow", existing ? "DELIVERY LOG" : "SEND PLAN"));
+  top.appendChild(el("b", "", existing ? `${sent.sent}/${sent.total} prototype sent` : `${planned.length} guests queued`));
+  node.appendChild(top);
+  const list = el("div", "delivery-list");
+  planned.slice(0, 4).forEach((d) => {
+    const row = el("p", "delivery-row");
+    row.appendChild(el("span", "", d.name));
+    row.appendChild(el("span", "", `${d.channel.toUpperCase()} · ${d.contact || "in-app only"}`));
+    list.appendChild(row);
+  });
+  if (planned.length > 4) list.appendChild(el("p", "delivery-more", `+${planned.length - 4} more guests`));
+  if (sent && sent.inApp) list.appendChild(el("p", "delivery-more warn", `${sent.inApp} guest(s) need real contact before production sending.`));
+  node.appendChild(list);
+}
 function doReveal() {
   const e = S.event;
   if (!e || e.revealed) return;
   // Prototype shortcut: host can approve early while testing.
   e.revealed = true;
   e.revealedAt = Date.now();
+  e.deliveryStatus = "prototype_sent";
+  S.deliveries = buildDeliveryManifest();
   save();
   if (S.role === "host") {
-    toast(`→ ALBUM LINK SENT TO ${S.guests.length} GUESTS`);
+    const summary = deliverySummary();
+    toast(`→ ALBUM LINK QUEUED FOR ${summary.total} GUESTS`);
     go("s-album");
   }
   // guest side is picked up by the tick → notification bubble
@@ -1279,6 +1340,7 @@ function renderAlbumPreview() {
   $("#pv-message-input").value = e.hostMessage || "Thanks for an amazing night.";
   $("#pv-cta-input").value = e.albumCtaLabel || "Next Event";
   syncAlbumPreviewHeader();
+  renderDeliveryPreview();
 
   const list = $("#pv-list");
   list.textContent = "";
@@ -1604,7 +1666,7 @@ function bindJoin() {
     S.you = { ...S.you, name, contact };
     if (S.event.revealed) {
       S.you.joined = true;
-      if (!S.guests.find((g) => g.id === "you")) S.guests.push({ id: "you", name });
+      if (!S.guests.find((g) => g.id === "you")) S.guests.push({ id: "you", name, contact });
       save();
       go("s-album");
       return;
@@ -1615,7 +1677,7 @@ function bindJoin() {
       return;
     }
     S.you.joined = true;
-    S.guests.push({ id: "you", name });
+    S.guests.push({ id: "you", name, contact });
     save();
     toast(`WELCOME, ${name.toUpperCase()} — FILM LOADED ✱`);
     go("s-guest-main");

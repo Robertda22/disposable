@@ -1891,6 +1891,38 @@ body::after {
 .preview-hero .album-message { margin-top: 4px; }
 
 
+/* reveal delivery manifest */
+.delivery-card {
+  border: 1.5px solid var(--ink-12);
+  border-radius: 22px;
+  padding: 16px;
+  margin: 12px 0;
+  background: rgba(255,255,255,0.42);
+}
+.delivery-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.delivery-top .eyebrow { margin: 0; }
+.delivery-top b { font-size: 14px; }
+.delivery-list { display: grid; gap: 8px; }
+.delivery-row {
+  display: grid;
+  grid-template-columns: .8fr 1.2fr;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-55);
+}
+.delivery-row span:first-child { color: var(--ink); font-weight: 700; }
+.delivery-row span:last-child { overflow-wrap: anywhere; text-align: right; }
+.delivery-more { margin: 2px 0 0; font-size: 12px; color: var(--ink-45); }
+.delivery-more.warn { color: var(--red); }
+
+
 /* dashboard QR popup */
 .qr-pop {
   position: absolute;

@@ -79,13 +79,19 @@ Scheduled reveal time is only a reminder, not automatic reveal.
 - Invite links and QR codes are prototype-only.
 - Recap film is client-side prototype, not AI-generated video.
 
+## Production Handoff
+
+Production readiness map: `PRODUCTION_READINESS.md`
+
+The app now creates a local reveal delivery manifest when the host approves the album. This is still fake sending, but it gives the future backend/email worker a clear contract to replace.
+
 ## Next Build Tasks
 
 1. Improve album preview controls: CTA link placeholder, clearer included/removed/favorite state.
 2. Make host review easier: tabs for Included, Removed, Favorites.
 3. Add dev/test controls for forcing live, ended, and revealed states.
-4. Tighten guest album page after reveal with a stronger emotional finish.
-5. Later: real backend, auth, storage, email/SMS, moderation, and deployment.
+4. Replace the local delivery manifest with real email/SMS sending.
+5. Later: real backend, auth, storage, moderation, payments, and deployment.
 
 ## Git Habit
 
