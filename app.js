@@ -1693,7 +1693,7 @@ function syncRecapControls() {
   b.classList.toggle("on", on);
   b.dataset.vibe = recapCfg.vibe;
   b.textContent = on ? "♪ on" : "♪ off";
-  $("#recap-len button").forEach((x) => x.classList.toggle("on", +x.dataset.sec === recapCfg.sec));
+  $$("#recap-len button").forEach((x) => x.classList.toggle("on", +x.dataset.sec === recapCfg.sec));
   updateRecapHelper();
 }
 
@@ -2439,7 +2439,7 @@ function tick() {
 function bindChrome() {
   $$("#role-toggle button").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));
   $$("[data-go-role]").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.goRole)));
-  $("[data-back]").forEach((b) => b.addEventListener("click", () => {
+  $$("[data-back]").forEach((b) => b.addEventListener("click", () => {
     if (recapPickMode) { recapPickMode = false; reviewSelecting = false; reviewSel.clear(); go("s-album"); return; }
     go(b.dataset.back);
   }));
