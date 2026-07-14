@@ -173,13 +173,14 @@
       <h1 class="h1">How many<br/><em>moments?</em></h1>
       <p class="sub">This is the max each guest can capture. Minimum is 5.</p>
 
-      <div class="radio-cards compact" id="exposure-cards">
-        <label class="radio-card"><input type="radio" name="exposures" value="5" /><span class="rc-title">5</span><span class="rc-sub">Very tight film roll</span></label>
-        <label class="radio-card"><input type="radio" name="exposures" value="10" /><span class="rc-title">10</span><span class="rc-sub">Small event</span></label>
-        <label class="radio-card"><input type="radio" name="exposures" value="24" checked /><span class="rc-title">24</span><span class="rc-sub">Default disposable roll</span></label>
-        <label class="radio-card"><input type="radio" name="exposures" value="36" /><span class="rc-title">36</span><span class="rc-sub">More room</span></label>
-        <label class="radio-card"><input type="radio" name="exposures" value="infinite" /><span class="rc-title">∞</span><span class="rc-sub">No limit for this prototype</span></label>
+      <div class="exposure-wheel" id="exposure-cards" role="radiogroup" aria-label="Shot limit">
+        <label class="exposure-option"><input type="radio" name="exposures" value="5" /><span class="exp-num">5</span><span class="exp-copy">Starter roll</span><span class="exp-price">Included</span></label>
+        <label class="exposure-option"><input type="radio" name="exposures" value="10" /><span class="exp-num">10</span><span class="exp-copy">Small event</span><span class="exp-price">Included</span></label>
+        <label class="exposure-option"><input type="radio" name="exposures" value="24" checked /><span class="exp-num">24</span><span class="exp-copy">Default roll</span><span class="exp-price">Included</span></label>
+        <label class="exposure-option"><input type="radio" name="exposures" value="36" /><span class="exp-num">36</span><span class="exp-copy">More room</span><span class="exp-price">+10 SEK</span></label>
+        <label class="exposure-option"><input type="radio" name="exposures" value="infinite" /><span class="exp-num">∞</span><span class="exp-copy">No limit</span><span class="exp-price">+20 SEK</span></label>
       </div>
+      <p class="micro exposure-note" id="exposure-price-note">24 captures per guest · included</p>
 
       <button class="btn solid wide" id="btn-exposure-continue">Create invite →</button>
     </div>
@@ -342,13 +343,12 @@
   <!-- ============ HOST · ALBUM PREVIEW BEFORE SEND ============ -->
   <section class="screen light" id="s-album-preview">
     <div class="screen-pad slim">
-      <div class="review-top">
+      <div class="review-top compact-review-top">
         <button class="back" id="pv-back-review">←</button>
         <button class="review-select" id="pv-approve-top">Approve &amp; Send</button>
       </div>
-      <p class="eyebrow">FINAL CHECK · HOST ONLY</p>
-      <h1 class="h1">Preview the<br/><em>album</em></h1>
-      <p class="sub">This is what guests receive after you approve it.</p>
+      <p class="eyebrow">HOST PREVIEW</p>
+      <h1 class="h1">Final<br/><em>album</em></h1>
 
       <div class="album-hero preview-hero">
         <div class="album-cover" id="pv-cover"></div>
@@ -357,7 +357,6 @@
           <h1 class="h2" id="pv-name">—</h1>
           <p class="album-message" id="pv-message">Thanks for an amazing night.</p>
           <p class="micro" id="pv-sub">—</p>
-          <button class="btn outline sm" id="pv-cta-preview">Next Event</button>
         </div>
         <span class="chip flash-chip">PREVIEW</span>
       </div>

@@ -99,3 +99,8 @@ git push
 ```
 
 The user wants GitHub synced after each completed change so the next AI can continue safely.
+
+
+## Current prototype pricing notes
+
+Shot limits currently support 5, 10, 24, 36, and unlimited captures per guest. 24 is included by default, 36 adds 10 SEK total, and unlimited adds 20 SEK total in the prototype payment sheet.

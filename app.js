@@ -442,22 +442,44 @@ function bindStyle() {
   });
 }
 
+function exposureMeta(value) {
+  const key = String(value || DEFAULT_EXPOSURES);
+  if (key === "36") return { label: "36 captures per guest", price: 10, note: "+10 SEK total" };
+  if (key === "infinite") return { label: "No limit", price: 20, note: "+20 SEK total" };
+  return { label: key + " captures per guest", price: 0, note: "included" };
+}
+function setExposureDraft(value) {
+  if (!draft) return;
+  const meta = exposureMeta(value);
+  draft.exposures = value === "infinite" ? "infinite" : Number(value);
+  draft.exposurePrice = meta.price;
+  draft.exposureLabel = meta.label;
+  const note = $("#exposure-price-note");
+  if (note) note.textContent = meta.label + " · " + meta.note;
+}
 function renderExposures() {
   if (!draft) { go("s-host-create"); return; }
   const chosen = String(draft.exposures || DEFAULT_EXPOSURES);
   const radio = document.querySelector('input[name="exposures"][value="' + chosen + '"]');
-  if (radio) radio.checked = true;
+  if (radio) {
+    radio.checked = true;
+    radio.closest(".exposure-option")?.scrollIntoView({ block: "center" });
+  }
+  setExposureDraft(chosen);
 }
 function bindExposures() {
   $("#exposure-cards").addEventListener("change", () => {
     if (!draft) return;
     const val = document.querySelector('input[name="exposures"]:checked').value;
-    draft.exposures = val === "infinite" ? "infinite" : Number(val);
+    setExposureDraft(val);
   });
   $("#btn-exposure-continue").addEventListener("click", () => {
     if (!draft) { go("s-host-create"); return; }
     const val = document.querySelector('input[name="exposures"]:checked').value;
-    draft.exposures = val === "infinite" ? "infinite" : Number(val);
+    setExposureDraft(val);
+    const exposurePrice = draft.exposurePrice || 0;
+    const basePrice = draft.pkgPrice || 0;
+    const totalPrice = basePrice + exposurePrice;
     const finalize = () => {
       S.event = {
         ...draft,
@@ -472,12 +494,17 @@ function bindExposures() {
       };
       delete S.event.pkgPrice;
       delete S.event.pkgLabel;
+      delete S.event.exposurePrice;
+      delete S.event.exposureLabel;
       save();
-      if (draft.pkgPrice > 0) toast("✓ PAID " + draft.pkgPrice + " SEK — EVENT CREATED");
+      if (totalPrice > 0) toast("✓ PAID " + totalPrice + " SEK — EVENT CREATED");
       go("s-host-share");
     };
-    if (draft.pkgPrice > 0) {
-      openPay({ title: draft.pkgLabel + " — up to " + draft.max + " guests", price: draft.pkgPrice, onDone: finalize });
+    if (totalPrice > 0) {
+      const parts = [];
+      if (basePrice > 0) parts.push(draft.pkgLabel + " — up to " + draft.max + " guests");
+      if (exposurePrice > 0) parts.push(draft.exposureLabel);
+      openPay({ title: parts.join(" + ") || "Event upgrade", price: totalPrice, onDone: finalize });
     } else {
       finalize();
     }
@@ -1237,7 +1264,6 @@ function syncAlbumPreviewHeader() {
   e.hostMessage = message;
   e.albumCtaLabel = cta;
   $("#pv-message").textContent = message;
-  $("#pv-cta-preview").textContent = cta;
   save();
 }
 function renderAlbumPreview() {
@@ -1282,7 +1308,6 @@ function bindAlbumPreview() {
   $("#pv-back-review").addEventListener("click", () => go("s-host-review"));
   $("#pv-message-input").addEventListener("input", syncAlbumPreviewHeader);
   $("#pv-cta-input").addEventListener("input", syncAlbumPreviewHeader);
-  $("#pv-cta-preview").addEventListener("click", () => toast("CTA PLACEHOLDER — CONNECT LATER"));
   $("#pv-approve").addEventListener("click", approveAlbumPreview);
   $("#pv-approve-top").addEventListener("click", approveAlbumPreview);
 }
