@@ -2109,3 +2109,64 @@ body::after {
   font-variant-numeric: tabular-nums;
 }
 .dash-stats .stat-label { font-size: 9px; letter-spacing: 0.12em; }
+
+
+/* review/reveal cleanup */
+#s-host-review .review-scroll { padding-bottom: 94px; }
+#s-host-review .review-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: -28px -28px 18px;
+  padding: 22px 28px 12px;
+  background: rgba(245,243,238,0.92);
+  backdrop-filter: blur(12px);
+}
+#s-host-review .eyebrow,
+#s-host-review .h1,
+#s-host-review .sub,
+#s-host-review .micro { text-align: center; }
+#s-host-review .micro { max-width: 320px; margin-left: auto; margin-right: auto; }
+#btn-reveal-2 {
+  position: sticky;
+  bottom: 12px;
+  z-index: 24;
+  box-shadow: 0 14px 36px rgba(15,13,9,0.18);
+}
+.select-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.select-bar .sel-act { min-width: 132px; }
+
+#s-album-preview .eyebrow.center,
+#s-album-preview .h1.center,
+#s-album-confirm .eyebrow.center,
+#s-album-confirm .h1.center { text-align: center; }
+#s-album-preview .compact-review-top,
+#s-album-confirm .compact-review-top { margin-bottom: 2px; }
+.edit-hero { min-height: 300px; border-radius: 26px; margin-top: 16px; }
+.clean-cover-copy,
+.centered-copy { text-align: center; margin: 0 auto; max-width: 92%; }
+.centered-copy .album-message { max-width: 320px; margin-left: auto; margin-right: auto; }
+.preview-hero .flash-chip { display: none; }
+.clean-delivery, #pv-delivery { text-align: center; }
+.delivery-top.simple { justify-content: center; flex-direction: column; align-items: center; gap: 4px; }
+.delivery-top.simple b { font-size: 18px; }
+.confirm-actions { display: grid; grid-template-columns: .8fr 1.2fr; gap: 10px; }
+.sticky-approve,
+.sticky-approve-row {
+  position: sticky;
+  bottom: 12px;
+  z-index: 28;
+  box-shadow: 0 16px 38px rgba(15,13,9,0.18);
+}
+#pv-list, #cf-list { padding-bottom: 92px; }
+#pv-list.grid, #cf-list.grid { grid-template-columns: repeat(3, 1fr); }
+#pv-list.grid .film .who,
+#cf-list.grid .film .who { font-size: 8px; }
+.preview-bar .pills button { min-width: 42px; }
+.qr-pop { position: fixed; z-index: 12000; }
+.dash-action:focus { outline: none; }

@@ -329,10 +329,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20s-7-4.6-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.4 12 20 12 20Z"/></svg>
         <span>Favourite</span>
       </button>
-      <button class="sel-act" id="act-keep">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m5 12 5 5 9-11"/></svg>
-        <span>Keep</span>
-      </button>
       <button class="sel-act danger" id="act-remove">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13"/></svg>
         <span>Remove</span>
@@ -345,20 +341,17 @@
     <div class="screen-pad slim">
       <div class="review-top compact-review-top">
         <button class="back" id="pv-back-review">←</button>
-        <button class="review-select" id="pv-approve-top">Approve &amp; Send</button>
       </div>
-      <p class="eyebrow">HOST PREVIEW</p>
-      <h1 class="h1">Final<br/><em>album</em></h1>
+      <p class="eyebrow center">HOST PREVIEW</p>
+      <h1 class="h1 center">Edit final<br/><em>album</em></h1>
 
-      <div class="album-hero preview-hero">
+      <div class="album-hero preview-hero edit-hero">
         <div class="album-cover" id="pv-cover"></div>
-        <div class="album-hero-copy">
-          <p class="eyebrow">THE ALBUM</p>
+        <div class="album-hero-copy clean-cover-copy">
+          <p class="eyebrow">COVER</p>
           <h1 class="h2" id="pv-name">—</h1>
-          <p class="album-message" id="pv-message">Thanks for an amazing night.</p>
           <p class="micro" id="pv-sub">—</p>
         </div>
-        <span class="chip flash-chip">PREVIEW</span>
       </div>
 
       <div class="album-edit-panel">
@@ -376,14 +369,53 @@
 
       <div class="album-bar preview-bar">
         <div class="pills">
-          <button class="on">All moments</button>
+          <button class="on" id="pv-all" type="button">All moments</button>
         </div>
-        <div class="pills">
-          <button class="on">☰</button>
+        <div class="pills" id="pv-view">
+          <button data-view="grid" class="on" title="Grid" type="button">▦</button>
+          <button data-view="feed" title="Feed" type="button">☰</button>
         </div>
       </div>
-      <div class="album-list" id="pv-list"></div>
-      <button class="btn flash wide" id="pv-approve">Approve &amp; Send to guests ✱</button>
+      <div class="album-list grid" id="pv-list"></div>
+      <button class="btn flash wide sticky-approve" id="pv-approve">Preview guest album →</button>
+    </div>
+  </section>
+
+  <!-- ============ HOST · FINAL ALBUM CONFIRM ============ -->
+  <section class="screen light" id="s-album-confirm">
+    <div class="screen-pad slim">
+      <div class="review-top compact-review-top">
+        <button class="back" id="cf-back-edit">←</button>
+      </div>
+      <p class="eyebrow center">READY TO SEND</p>
+      <h1 class="h1 center">Guest<br/><em>preview</em></h1>
+
+      <div class="album-hero preview-hero">
+        <div class="album-cover" id="cf-cover"></div>
+        <div class="album-hero-copy centered-copy">
+          <p class="eyebrow">THE ALBUM</p>
+          <h1 class="h2" id="cf-name">—</h1>
+          <p class="album-message" id="cf-message">Thanks for an amazing night.</p>
+          <p class="micro" id="cf-sub">—</p>
+        </div>
+      </div>
+
+      <div class="delivery-card clean-delivery" id="cf-delivery"></div>
+
+      <div class="album-bar preview-bar">
+        <div class="pills">
+          <button class="on" type="button">All moments</button>
+        </div>
+        <div class="pills" id="cf-view">
+          <button data-view="grid" class="on" title="Grid" type="button">▦</button>
+          <button data-view="feed" title="Feed" type="button">☰</button>
+        </div>
+      </div>
+      <div class="album-list grid" id="cf-list"></div>
+      <div class="confirm-actions sticky-approve-row">
+        <button class="btn outline wide" id="cf-edit">Edit</button>
+        <button class="btn flash wide" id="cf-send">Approve &amp; Send ✱</button>
+      </div>
     </div>
   </section>
 

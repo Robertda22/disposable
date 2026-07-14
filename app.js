@@ -1310,7 +1310,6 @@ function bindReview() {
     renderReview();
   });
   $("#act-fav").addEventListener("click", () => applyToSelected((m) => { m.favorite = true; }, "FAVOURITED"));
-  $("#act-keep").addEventListener("click", () => applyToSelected((m) => { m.removed = false; }, "KEPT"));
   $("#act-remove").addEventListener("click", () => applyToSelected((m) => { m.removed = true; }, "REMOVED"));
 }
 
@@ -1324,25 +1323,12 @@ function syncAlbumPreviewHeader() {
   const cta = $("#pv-cta-input").value.trim() || "Next Event";
   e.hostMessage = message;
   e.albumCtaLabel = cta;
-  $("#pv-message").textContent = message;
+  const pvMessage = document.getElementById("pv-message");
+  if (pvMessage) pvMessage.textContent = message;
   save();
 }
-function renderAlbumPreview() {
-  const e = S.event;
-  if (!e) { go("s-host-create"); return; }
-  $("#pv-name").textContent = e.name;
-  const coverSrc = (e.invite && e.invite.cover) || e.cover;
-  const cover = $("#pv-cover");
-  if (coverSrc) { cover.style.backgroundImage = "url(" + coverSrc + ")"; cover.classList.add("has-img"); }
-  else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
-  const items = previewVisibleMoments();
-  $("#pv-sub").textContent = fmtNum(items.length) + " MOMENTS · " + fmtNum(S.guests.length) + " GUESTS · " + fmtDT(e.start);
-  $("#pv-message-input").value = e.hostMessage || "Thanks for an amazing night.";
-  $("#pv-cta-input").value = e.albumCtaLabel || "Next Event";
-  syncAlbumPreviewHeader();
-  renderDeliveryPreview();
-
-  const list = $("#pv-list");
+function renderMomentList(list, items, view, opts = {}) {
+  list.classList.toggle("grid", view === "grid");
   list.textContent = "";
   if (!items.length) {
     list.appendChild(el("p", "empty-note", "The album is empty."));
@@ -1356,14 +1342,55 @@ function renderAlbumPreview() {
     if (m.kind === "clip") ph.appendChild(el("span", "vid-dot"));
     if (m.favorite) ph.appendChild(favBadge());
     fig.appendChild(ph);
-    fig.addEventListener("click", () => openLightbox(m, { host: true }));
+    fig.addEventListener("click", () => openLightbox(m, opts));
     list.appendChild(fig);
   });
 }
+function syncPreviewView(prefix, view) {
+  $$("#" + prefix + "-view button").forEach((b) => b.classList.toggle("on", b.dataset.view === view));
+}
+function renderAlbumPreview() {
+  const e = S.event;
+  if (!e) { go("s-host-create"); return; }
+  $("#pv-name").textContent = e.name;
+  const coverSrc = (e.invite && e.invite.cover) || e.cover;
+  const cover = $("#pv-cover");
+  if (coverSrc) { cover.style.backgroundImage = "url(" + coverSrc + ")"; cover.classList.add("has-img"); }
+  else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
+  const items = previewVisibleMoments();
+  $("#pv-sub").textContent = fmtNum(items.length) + " MOMENTS · " + fmtNum(S.guests.length) + " GUESTS";
+  $("#pv-message-input").value = e.hostMessage || "Thanks for an amazing night.";
+  $("#pv-cta-input").value = e.albumCtaLabel || "Next Event";
+  syncAlbumPreviewHeader();
+  renderDeliveryPreview();
+  syncPreviewView("pv", previewAlbumView);
+  renderMomentList($("#pv-list"), items, previewAlbumView, { host: true });
+}
+function renderAlbumConfirm() {
+  const e = S.event;
+  if (!e) { go("s-host-create"); return; }
+  const coverSrc = (e.invite && e.invite.cover) || e.cover;
+  const cover = $("#cf-cover");
+  if (coverSrc) { cover.style.backgroundImage = "url(" + coverSrc + ")"; cover.classList.add("has-img"); }
+  else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
+  const items = previewVisibleMoments();
+  $("#cf-name").textContent = e.name;
+  $("#cf-message").textContent = e.hostMessage || "Thanks for an amazing night.";
+  $("#cf-sub").textContent = fmtNum(items.length) + " MOMENTS · " + fmtNum(S.guests.length) + " GUESTS · " + fmtDT(e.start);
+  renderDeliveryPreview();
+  const from = $("#pv-delivery");
+  const to = $("#cf-delivery");
+  if (from && to) to.innerHTML = from.innerHTML;
+  syncPreviewView("cf", confirmAlbumView);
+  renderMomentList($("#cf-list"), items, confirmAlbumView, { host: true });
+}
 function approveAlbumPreview() {
-  if (eventPhase() !== "ended") { toast("REVEAL OPENS AFTER THE EVENT ENDS"); return; }
   syncAlbumPreviewHeader();
   save();
+  go("s-album-confirm");
+}
+function approveAlbumConfirm() {
+  if (eventPhase() !== "ended") toast("PROTOTYPE SEND — TIMER BYPASSED FOR TESTING");
   doReveal();
 }
 function bindAlbumPreview() {
@@ -1371,7 +1398,11 @@ function bindAlbumPreview() {
   $("#pv-message-input").addEventListener("input", syncAlbumPreviewHeader);
   $("#pv-cta-input").addEventListener("input", syncAlbumPreviewHeader);
   $("#pv-approve").addEventListener("click", approveAlbumPreview);
-  $("#pv-approve-top").addEventListener("click", approveAlbumPreview);
+  $$("#pv-view button").forEach((b) => b.addEventListener("click", () => { previewAlbumView = b.dataset.view; renderAlbumPreview(); }));
+  $("#cf-back-edit").addEventListener("click", () => go("s-album-preview"));
+  $("#cf-edit").addEventListener("click", () => go("s-album-preview"));
+  $("#cf-send").addEventListener("click", approveAlbumConfirm);
+  $$("#cf-view button").forEach((b) => b.addEventListener("click", () => { confirmAlbumView = b.dataset.view; renderAlbumConfirm(); }));
 }
 /* ============================================================
    LIGHTBOX — tap a moment to view it big; toggle filtered / original
@@ -1404,10 +1435,12 @@ function renderLightbox() {
     actions.appendChild(lbAction("act-fav", m.favorite ? "Favourited" : "Favourite", () => {
       m.favorite = !m.favorite; save(); renderLightbox(); renderReview();
     }));
-    actions.appendChild(lbAction(m.removed ? "act-keep" : "act-remove", m.removed ? "Keep" : "Remove", () => {
-      m.removed = !m.removed; save(); renderReview();
-      toast(m.removed ? "REMOVED" : "KEPT"); closeLightbox();
-    }));
+    if (!m.removed) {
+      actions.appendChild(lbAction("act-remove", "Remove", () => {
+        m.removed = true; save(); renderReview();
+        toast("REMOVED FROM ALBUM"); closeLightbox();
+      }));
+    }
   } else if (opts.own) {
     actions.appendChild(lbAction("act-remove", "Delete", () => { deleteMoment(m.id); closeLightbox(); }));
   }
@@ -2205,6 +2238,7 @@ function renderAlbum() {
   $("#btn-recap").hidden = !isHost; // only the host builds the recap film
   $("#al-scope").style.display = isHost ? "none" : "flex";
   if (isHost) albumScope = "all";
+  if (!albumView) albumView = "grid";
   $$("#al-scope button").forEach((b) => b.classList.toggle("on", b.dataset.scope === albumScope));
   $$("#al-view button").forEach((b) => b.classList.toggle("on", b.dataset.view === albumView));
 
