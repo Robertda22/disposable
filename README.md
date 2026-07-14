@@ -26,6 +26,7 @@ Host:
 - Choose reveal/reminder settings.
 - Choose package.
 - Choose camera style: Vintage or Original.
+- Choose per-guest moment limit: 5, 10, 24, 36, or infinite.
 - Create and customize invite.
 - Share invite / QR.
 - Watch dashboard.
@@ -36,7 +37,7 @@ Host:
 
 Guest:
 - Join event with name and contact.
-- Capture or upload moments while event is live.
+- Capture photo/video moments while event is live.
 - After event ends, camera closes.
 - Guest waits while host reviews.
 - After host approves, guest gets album-ready notification.
@@ -48,7 +49,7 @@ Albums must never auto-reveal.
 
 When the event ends:
 - Capture closes.
-- Guests cannot upload more moments.
+- Guests cannot capture more moments.
 - Host reviews moments.
 - Host previews the album.
 - Host presses Approve & Send.
@@ -62,9 +63,9 @@ Scheduled reveal time is only a reminder, not automatic reveal.
 - Local event state.
 - Local guest/host role switching.
 - Camera/demo camera capture.
-- Local image storage in browser storage.
+- Local photo/video moment storage in browser storage.
 - Invite customization prototype.
-- Host review and album preview prototype.
+- Host review and album preview prototype, including early preview/send for testing.
 - Guest waiting and album-ready states.
 
 ## What Is Fake / Local

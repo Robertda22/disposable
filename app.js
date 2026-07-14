@@ -122,7 +122,9 @@ const PKGS = {
   standard: { label: "Standard", max: 50,  price: 99 },
   premium:  { label: "Premium",  max: 100, price: 199 },
 };
-const EXPOSURES = 24;
+const DEFAULT_EXPOSURES = 24;
+function maxExposures(e = S.event) { return e?.exposures === "infinite" ? Infinity : Number(e?.exposures || DEFAULT_EXPOSURES); }
+function exposureLabel(e = S.event) { return e?.exposures === "infinite" ? "∞ SHOTS" : fmtNum(maxExposures(e)) + " SHOTS"; }
 const SIM_NAMES = ["Lucas", "Elsa", "Hugo", "Alice", "Oscar", "Maja", "Liam", "Astrid", "Noah", "Freja", "William", "Saga", "Elias", "Vera", "Axel", "Stina", "Leo", "Ines", "Melvin", "Tuva"];
 const FILM_PAIRS = [
   ["#e8b27c", "#31404f"], ["#dfa08a", "#3d4a33"], ["#e6c98f", "#5a3a3a"],
@@ -227,6 +229,7 @@ const enterHooks = {
   "s-host-create": renderCreate,
   "s-host-unlock": renderUnlock,
   "s-host-style": renderStyle,
+  "s-host-exposures": renderExposures,
   "s-host-share": renderShare,
   "s-invite-edit": renderShare,
   "s-host-dash": renderDash,
@@ -412,6 +415,7 @@ function bindPackage() {
     draft.pkgPrice = pkg.price;
     draft.pkgLabel = pkg.label;
     if (!draft.cameraStyle) draft.cameraStyle = "vintage";
+    if (!draft.exposures) draft.exposures = DEFAULT_EXPOSURES;
     go("s-host-style");
   });
 }
@@ -433,6 +437,27 @@ function bindStyle() {
   $("#btn-style-continue").addEventListener("click", () => {
     if (!draft) { go("s-host-create"); return; }
     draft.cameraStyle = document.querySelector('input[name="cameraStyle"]:checked').value;
+    if (!draft.exposures) draft.exposures = DEFAULT_EXPOSURES;
+    go("s-host-exposures");
+  });
+}
+
+function renderExposures() {
+  if (!draft) { go("s-host-create"); return; }
+  const chosen = String(draft.exposures || DEFAULT_EXPOSURES);
+  const radio = document.querySelector('input[name="exposures"][value="' + chosen + '"]');
+  if (radio) radio.checked = true;
+}
+function bindExposures() {
+  $("#exposure-cards").addEventListener("change", () => {
+    if (!draft) return;
+    const val = document.querySelector('input[name="exposures"]:checked').value;
+    draft.exposures = val === "infinite" ? "infinite" : Number(val);
+  });
+  $("#btn-exposure-continue").addEventListener("click", () => {
+    if (!draft) { go("s-host-create"); return; }
+    const val = document.querySelector('input[name="exposures"]:checked').value;
+    draft.exposures = val === "infinite" ? "infinite" : Number(val);
     const finalize = () => {
       S.event = {
         ...draft,
@@ -587,7 +612,7 @@ function drawInvite() {
 
   ctx.fillStyle = "rgba(248,246,240,0.82)";
   ctx.font = '500 30px "Azeret Mono", monospace';
-  ctx.fillText(inviteDateStr(e) + "  ·  " + EXPOSURES + " SHOTS", pad, y);
+  ctx.fillText(inviteDateStr(e) + "  ·  " + exposureLabel(e), pad, y);
   y += 46;
 
   ctx.strokeStyle = cfg.accent;
@@ -939,6 +964,8 @@ function renderRequests() {
   const reqs = [];
   if (S.simRequest) reqs.push({ ...S.simRequest, kind: "sim" });
   if (S.request) reqs.push({ ...S.request, kind: "real" });
+  const badge = $("#request-badge");
+  if (badge) { badge.hidden = !reqs.length; badge.textContent = reqs.length > 99 ? "99+" : String(reqs.length); }
   if (!reqs.length) return;
 
   const rq = reqs[0];
@@ -999,6 +1026,7 @@ function openQrPop() {
   if (!S.event) return;
   $("#qr-pop-name").textContent = S.event.name;
   drawQR($("#qr-pop-canvas"), S.event.code, "#FFFFFF", "#15140F");
+  $("#qr-pop-link").textContent = inviteUrl();
   $("#qr-pop").hidden = false;
 }
 function closeQrPop() {
@@ -1011,6 +1039,17 @@ function bindDash() {
   $("#qr-pop-backdrop").addEventListener("click", closeQrPop);
   $("#btn-review").addEventListener("click", () => go("s-host-review"));
   $("#btn-reshare").addEventListener("click", openQrPop);
+  $("#qr-copy").addEventListener("click", async () => {
+    const url = inviteUrl();
+    try { await navigator.clipboard?.writeText(url); toast("LINK COPIED"); }
+    catch { toast(url); }
+  });
+  $("#qr-share").addEventListener("click", async () => {
+    const url = inviteUrl();
+    if (navigator.share) { try { await navigator.share({ title: S.event?.name || "Disposable", text: "Join my Disposable event", url }); return; } catch {} }
+    try { await navigator.clipboard?.writeText(url); toast("LINK COPIED"); }
+    catch { toast(url); }
+  });
   $("#btn-host-cam").addEventListener("click", () => {
     const phase = eventPhase();
     if (phase === "revealed") { go("s-album"); return; }
@@ -1020,10 +1059,7 @@ function bindDash() {
   });
   const openReveal = () => {
     if (eventPhase() === "revealed") { go("s-album"); return; }
-    if (eventPhase() !== "ended") {
-      toast("REVEAL OPENS AFTER THE EVENT ENDS");
-      return;
-    }
+    // Prototype shortcut: allow preview/reveal before the timer ends so the MVP can be tested quickly.
     S.event.hostMessage = S.event.hostMessage || "Thanks for an amazing night.";
     S.event.albumCtaLabel = S.event.albumCtaLabel || "Next Event";
     save();
@@ -1045,7 +1081,7 @@ function bindDash() {
 function doReveal() {
   const e = S.event;
   if (!e || e.revealed) return;
-  if (Date.now() < e.end) { toast("REVIEW FIRST AFTER THE EVENT ENDS"); return; }
+  // Prototype shortcut: host can approve early while testing.
   e.revealed = true;
   e.revealedAt = Date.now();
   save();
@@ -1146,7 +1182,7 @@ function updateReviewHeader(total, removed) {
   const phase = eventPhase();
   $("#review-count").textContent = `${total} moments · ${removed} removed`;
   const revealBtn = $("#btn-reveal-2");
-  revealBtn.disabled = phase !== "ended";
+  revealBtn.disabled = false;
   if (phase === "ended") {
     revealBtn.textContent = "Preview album →";
     $("#review-hint").textContent = "CAMERA IS CLOSED. REMOVE ANYTHING YOU DON’T WANT SENT, THEN PREVIEW THE FINAL ALBUM.";
@@ -1155,8 +1191,8 @@ function updateReviewHeader(total, removed) {
     revealBtn.textContent = "Open album →";
     $("#review-hint").textContent = "ALBUM HAS BEEN SENT. YOU CAN STILL VIEW THE FINAL EVENT PAGE.";
   } else {
-    revealBtn.textContent = "Preview after capture closes";
-    $("#review-hint").textContent = "GUESTS STILL CAN’T SEE ANY OF THIS. FINAL SEND UNLOCKS AFTER CAPTURE CLOSES.";
+    revealBtn.textContent = "Preview album now";
+    $("#review-hint").textContent = "PROTOTYPE MODE: YOU CAN PREVIEW AND SEND NOW FOR TESTING.";
   }
 }
 
@@ -1746,7 +1782,8 @@ function updateCamera() {
   const lock = $("#vf-lock");
   const cta = $("#vf-lock-cta");
   const waitCta = $("#vf-wait-cta");
-  const left = Math.max(0, EXPOSURES - myMoments().length);
+  const limit = maxExposures(e);
+  const left = limit === Infinity ? Infinity : Math.max(0, limit - myMoments().length);
   setFilmCounter(left);
   $("#vf-stamp").textContent = stampText(Date.now());
 
@@ -1754,14 +1791,12 @@ function updateCamera() {
     lock.hidden = true;
     startCam();
     $("#btn-shutter").disabled = left <= 0;
-    $("#btn-upload").disabled = left <= 0;
   } else {
     stopCam();
     lock.hidden = false;
     cta.hidden = true;
     waitCta.hidden = true;
     $("#btn-shutter").disabled = true;
-    $("#btn-upload").disabled = true;
     if (phase === "upcoming") {
       $("#vf-lock-title").textContent = "Camera locked";
       $("#vf-lock-sub").textContent = `THE EVENT HASN’T STARTED — OPENS IN ${fmtCountdown(e.start - Date.now())}`;
@@ -1781,13 +1816,19 @@ function updateCamera() {
 
 let filmShown = null;
 function setFilmCounter(n) {
-  $("#r-prev").textContent = n + 1;
-  $("#hud-exp").textContent = n;
-  $("#r-next").textContent = Math.max(0, n - 1);
+  if (n === Infinity) {
+    $("#r-prev").textContent = "∞";
+    $("#hud-exp").textContent = "∞";
+    $("#r-next").textContent = "∞";
+  } else {
+    $("#r-prev").textContent = n + 1;
+    $("#hud-exp").textContent = n;
+    $("#r-next").textContent = Math.max(0, n - 1);
+  }
   if (filmShown !== null && filmShown !== n) {
     const reel = $("#film-reel");
     reel.classList.remove("roll");
-    void reel.offsetWidth; // restart the animation
+    void reel.offsetWidth;
     reel.classList.add("roll");
   }
   filmShown = n;
@@ -1833,7 +1874,8 @@ function setCamMode(mode) {
 // for the BACK camera try the real torch/LED (works on Android; iOS has no web torch)
 function fireFlash() {
   if (!camFlash) return;
-  if (cam.demo || camFacing === "user") { flashFx(); return; }
+  flashFx();
+  if (cam.demo || camFacing === "user") { return; }
   const track = cam.stream?.getVideoTracks?.()[0];
   try {
     if (track?.getCapabilities?.().torch) {
@@ -1849,7 +1891,7 @@ function whoName() {
 
 function takePhoto() {
   if (cam.busy || recording) return;
-  if (EXPOSURES - myMoments().length <= 0) return;
+  if (maxExposures() !== Infinity && maxExposures() - myMoments().length <= 0) return;
   const s = captureSource();
   if (!s) { toast("CAMERA WARMING UP…"); return; }
   cam.busy = true;
@@ -1862,27 +1904,13 @@ function takePhoto() {
   }, 120);
 }
 
-function uploadPhotoFile(file) {
-  if (!file || eventPhase() !== "live" || recording) return;
-  if (EXPOSURES - myMoments().length <= 0) { toast("FILM FULL"); return; }
-  const img = new Image();
-  img.onload = () => {
-    const ts = Date.now();
-    const frame = captureRaw(img, img.width, img.height, 840, 1120, false, 0.82);
-    addMoment({ id: uid(), guestId: "you", name: whoName(), kind: "photo", ts, frames: [frame], removed: false });
-    toast("PHOTO ADDED TO FILM ✓");
-    URL.revokeObjectURL(img.src);
-  };
-  img.src = URL.createObjectURL(file);
-}
-
 const CLIP_MS = 3000;   // up to 3 seconds
 const CLIP_STEP = 220;  // grab a frame this often
 const CLIP_MAX = 16;    // hard cap on captured frames
 
 function toggleVideo() {
   if (recording) { finishVideo(); return; }
-  if (EXPOSURES - myMoments().length <= 0) return;
+  if (maxExposures() !== Infinity && maxExposures() - myMoments().length <= 0) return;
   const s0 = captureSource();
   if (!s0) { toast("CAMERA WARMING UP…"); return; }
   recording = true;
@@ -1930,14 +1958,6 @@ function bindCamera() {
     if (eventPhase() !== "live") return;
     if (camMode === "photo") takePhoto();
     else toggleVideo();
-  });
-  $("#btn-upload").addEventListener("click", () => {
-    if (eventPhase() === "live") $("#in-upload").click();
-  });
-  $("#in-upload").addEventListener("change", (e) => {
-    const f = e.target.files[0];
-    e.target.value = "";
-    uploadPhotoFile(f);
   });
   $("#btn-flash").addEventListener("click", toggleFlash);
   $("#btn-flip").addEventListener("click", flipCam);
@@ -2031,24 +2051,41 @@ function renderEventTab() {
   if (currentScreen !== "s-guest-main" || !galleryOpen || galleryPage !== "event") return;
   const e = S.event;
   if (!e) return;
+  $("#ge-name").textContent = e.name;
+  const coverSrc = (e.invite && e.invite.cover) || e.cover;
+  const cover = $("#ge-cover");
+  if (coverSrc) { cover.style.backgroundImage = "url(" + coverSrc + ")"; cover.classList.add("has-img"); }
+  else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
   setNum("#ge-guests", S.guests.length);
   setNum("#ge-moments", S.moments.length);
   const label = $("#ge-clock-label"), clock = $("#ge-clock");
+  const liveLabel = $("#ge-live-label");
+  const note = $("#ge-note");
   const now = Date.now();
   clock.style.fontSize = ""; clock.style.fontFamily = ""; clock.style.fontStyle = ""; clock.style.fontWeight = "";
   if (e.revealed) {
+    liveLabel.textContent = "ALBUM READY";
+    note.textContent = "The host approved the album. Everyone can relive it now.";
     label.textContent = "REVEALED";
     styleTextNum(clock, "It’s open");
   } else if (now < e.start) {
+    liveLabel.textContent = "UPCOMING";
+    note.textContent = "Camera opens when the event starts.";
     label.textContent = "STARTS IN";
     clock.textContent = fmtCountdown(e.start - now);
   } else if (now >= e.end) {
+    liveLabel.textContent = "CAPTURE CLOSED";
+    note.textContent = "Your moments are saved. Waiting for the host to approve the album.";
     label.textContent = "REVIEW";
     styleTextNum(clock, "Waiting for host approval");
   } else if (e.unlock === "manual") {
+    liveLabel.textContent = "LIVE EVENT";
+    note.textContent = "Everyone’s capturing. No one’s peeking.";
     label.textContent = "REVEAL";
     styleTextNum(clock, "After host review");
   } else {
+    liveLabel.textContent = "LIVE EVENT";
+    note.textContent = "Everyone’s capturing. No one’s peeking.";
     label.textContent = e.unlock === "time" ? "REVIEW REMINDER" : "CAPTURE ENDS IN";
     clock.textContent = fmtCountdown((e.unlock === "time" ? e.revealAt : e.end) - now);
   }
@@ -2239,6 +2276,7 @@ function boot() {
   bindUnlock();
   bindPackage();
   bindStyle();
+  bindExposures();
   bindShare();
   bindDash();
   bindJoin();
