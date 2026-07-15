@@ -2583,3 +2583,59 @@ body::after {
   content: " · HIDDEN IF EMPTY";
   color: var(--ink-45);
 }
+
+/* Album action buttons: match the final album hero instead of the old icon tray */
+#s-album .album-share-card {
+  top: 22px;
+  left: 22px;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+#s-album .album-share-card .mini-action {
+  width: auto;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(12, 11, 8, 0.84);
+  color: var(--paper);
+  border: 1px solid rgba(245, 243, 238, 0.18);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+#s-album .album-share-card #al-home {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: rgba(245, 243, 238, 0.9);
+}
+#s-album .album-share-card .mini-action:hover,
+#s-album .album-share-card .mini-action:focus-visible {
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+}
+@media (max-width: 380px) {
+  #s-album .album-share-card {
+    left: 16px;
+    gap: 4px;
+  }
+  #s-album .album-share-card .mini-action {
+    height: 31px;
+    min-height: 31px;
+    padding: 0 9px;
+    font-size: 7.5px;
+  }
+}
