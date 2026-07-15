@@ -1111,7 +1111,7 @@ function bindDash() {
     if (eventPhase() === "revealed") { go("s-album"); return; }
     // Prototype shortcut: allow preview/reveal before the timer ends so the MVP can be tested quickly.
     S.event.hostMessage = S.event.hostMessage || "Thanks for an amazing night.";
-    S.event.albumCtaLabel = S.event.albumCtaLabel || "Next Event";
+    S.event.albumCtaLabel = cleanAlbumCta(S.event.albumCtaLabel);
     save();
     go("s-album-preview");
   };
@@ -1121,7 +1121,7 @@ function bindDash() {
   $("#reveal-cancel").addEventListener("click", () => { $("#sheet-reveal").hidden = true; });
   $("#reveal-confirm").addEventListener("click", () => {
     S.event.hostMessage = $("#reveal-message").value.trim() || "Thanks for an amazing night.";
-    S.event.albumCtaLabel = $("#reveal-cta").value.trim() || "Next Event";
+    S.event.albumCtaLabel = cleanAlbumCta($("#reveal-cta").value);
     save();
     $("#sheet-reveal").hidden = true;
     doReveal();
@@ -1338,11 +1338,15 @@ function bindReview() {
 function previewVisibleMoments() {
   return S.moments.filter((m) => !m.removed).sort((a, b) => a.ts - b.ts);
 }
+function cleanAlbumCta(value) {
+  const txt = String(value || "").trim();
+  return txt.toLowerCase() === "next event" ? "" : txt;
+}
 function syncAlbumPreviewHeader() {
   const e = S.event;
   if (!e) return;
   const message = $("#pv-message-input").value.trim() || "Thanks for an amazing night.";
-  const cta = $("#pv-cta-input").value.trim() || "Next Event";
+  const cta = cleanAlbumCta($("#pv-cta-input").value);
   e.hostMessage = message;
   e.albumCtaLabel = cta;
   const pvMessage = document.getElementById("pv-message");
@@ -1382,7 +1386,7 @@ function renderAlbumPreview() {
   const items = previewVisibleMoments();
   $("#pv-sub").textContent = fmtNum(items.length) + " MOMENTS · " + fmtNum(S.guests.length) + " GUESTS";
   $("#pv-message-input").value = e.hostMessage || "Thanks for an amazing night.";
-  $("#pv-cta-input").value = e.albumCtaLabel || "Next Event";
+  $("#pv-cta-input").value = cleanAlbumCta(e.albumCtaLabel);
   syncAlbumPreviewHeader();
   syncPreviewView("pv", previewAlbumView);
   renderMomentList($("#pv-list"), items, previewAlbumView, { host: true });
@@ -2299,7 +2303,10 @@ function renderAlbum() {
   albumScreen.style.setProperty("--album-accent", hexA(accent, 0.16));
   albumScreen.style.setProperty("--album-accent-solid", accent);
   $("#al-message").textContent = e.hostMessage || "Thanks for an amazing night.";
-  $("#al-cta").textContent = e.albumCtaLabel || "Next Event";
+  const ctaLabel = cleanAlbumCta(e.albumCtaLabel);
+  const ctaBtn = $("#al-cta");
+  ctaBtn.hidden = !ctaLabel;
+  ctaBtn.textContent = ctaLabel;
   const visible = S.moments.filter((m) => !m.removed);
   $("#al-sub").textContent = `${fmtNum(visible.length)} MOMENTS · ${fmtNum(S.guests.length)} GUESTS · ${fmtDT(e.start)}`;
 
