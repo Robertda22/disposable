@@ -411,6 +411,21 @@
     </div>
   </section>
 
+  <!-- ============ HOST · ALBUM SENT ============ -->
+  <section class="screen dark" id="s-album-sent">
+    <div class="screen-pad centered sent-pad">
+      <div class="sent-mark">✓</div>
+      <p class="eyebrow center">ALBUM SENT</p>
+      <h1 class="h1 center">Successfully<br/><em>sent</em></h1>
+      <p class="sub center" id="sent-sub">Guests can now open the final album.</p>
+      <button class="btn flash wide" id="sent-open">Open album →</button>
+      <div class="sent-actions">
+        <button class="mini-action" id="sent-copy" type="button">Copy link</button>
+        <button class="mini-action" id="sent-share" type="button">Share</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ GUEST · GATE ============ -->
   <section class="screen light" id="s-guest-gate">
     <div class="screen-pad centered">
@@ -582,17 +597,11 @@
         </div>
         <span class="chip flash-chip">REVEALED ✱</span>
       </div>
-      <div class="album-share-card" id="album-share-card" hidden>
-        <div>
-          <p class="eyebrow">ALBUM LINK</p>
-          <strong>Share manually</strong>
-        </div>
-        <div class="album-share-actions">
-          <button class="mini-action" id="al-copy" type="button">Copy link</button>
-          <button class="mini-action" id="al-share" type="button">Share</button>
-          <button class="mini-action" id="al-show-qr" type="button">QR</button>
-          <button class="mini-action" id="al-home" type="button">Home</button>
-        </div>
+      <div class="album-share-card" id="album-share-card" hidden aria-label="Album actions">
+        <button class="mini-action" id="al-home" type="button" title="Home">Home</button>
+        <button class="mini-action" id="al-copy" type="button" title="Copy album link">Link</button>
+        <button class="mini-action" id="al-share" type="button" title="Share album">Share</button>
+        <button class="mini-action" id="al-show-qr" type="button" title="Show QR code">QR</button>
       </div>
       <div class="album-bar">
         <div class="pills" id="al-scope">
@@ -630,9 +639,9 @@
       <p class="recap-helper" id="recap-helper">Tap + to choose moments, or let it auto mix.</p>
       <button class="btn flash wide" id="recap-play">Auto make movie</button>
       <div class="recap-export-panel" id="recap-export-panel" hidden>
-        <button class="btn ghost wide" id="recap-export" type="button">Export recap</button>
-        <button class="mini-action" id="recap-copy" type="button">Copy link</button>
-        <button class="mini-action" id="recap-share" type="button">Share</button>
+        <button class="recap-share-icon primary" id="recap-export" type="button" title="Export recap">Export</button>
+        <button class="recap-share-icon" id="recap-copy" type="button" title="Copy link">Link</button>
+        <button class="recap-share-icon" id="recap-share" type="button" title="Share recap">Share</button>
       </div>
     </div>
   </div>

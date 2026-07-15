@@ -239,6 +239,7 @@ const enterHooks = {
   "s-host-review": enterReview,
   "s-album-preview": renderAlbumPreview,
   "s-album-confirm": renderAlbumConfirm,
+  "s-album-sent": renderAlbumSent,
   "s-guest-join": renderJoin,
   "s-guest-main": renderGuestMain,
   "s-album": renderAlbum,
@@ -522,7 +523,7 @@ function bindExposures() {
 const invImgCache = { logo: null, cover: null };
 
 function defaultInvite() {
-  return { accent: "#E5352B", font: "grotesk", cover: null, logo: null, showQR: true };
+  return { accent: "#F8F6F0", font: "grotesk", cover: null, logo: null, showQR: true };
 }
 
 function invFontFamily(kind) {
@@ -615,13 +616,18 @@ function drawInvite() {
     ctx.fillRect(0, 0, W, H);
   }
 
-  // legibility scrim toward the bottom
+  // legibility scrim: neutral first, then a small accent wash at the bottom.
   const scrim = ctx.createLinearGradient(0, 0, 0, H);
-  scrim.addColorStop(0, "rgba(10,8,5,0.10)");
-  scrim.addColorStop(0.42, "rgba(10,8,5,0.02)");
-  scrim.addColorStop(0.82, hexA(cfg.accent, 0.36));
-  scrim.addColorStop(1, hexA(cfg.accent, 0.82));
+  scrim.addColorStop(0, "rgba(10,8,5,0.08)");
+  scrim.addColorStop(0.46, "rgba(10,8,5,0.02)");
+  scrim.addColorStop(0.76, "rgba(10,8,5,0.48)");
+  scrim.addColorStop(1, "rgba(10,8,5,0.88)");
   ctx.fillStyle = scrim;
+  ctx.fillRect(0, 0, W, H);
+  const tint = ctx.createLinearGradient(0, H * 0.58, 0, H);
+  tint.addColorStop(0, hexA(cfg.accent, 0));
+  tint.addColorStop(1, hexA(cfg.accent, 0.48));
+  ctx.fillStyle = tint;
   ctx.fillRect(0, 0, W, H);
 
 
@@ -1154,19 +1160,15 @@ function deliverySummary() {
 function doReveal() {
   const e = S.event;
   if (!e || e.revealed) return;
-  // Prototype shortcut: host can approve early while testing.
   e.revealed = true;
   e.revealedAt = Date.now();
   e.deliveryStatus = "prototype_sent";
   S.deliveries = buildDeliveryManifest();
   save();
-  if (S.role === "host") {
-    const summary = deliverySummary();
-    toast(`→ ALBUM LINK QUEUED FOR ${summary.total} GUESTS`);
-    go("s-album");
-  }
-  // guest side is picked up by the tick → notification bubble
+  if (S.role === "host") go("s-album-sent");
+  // guest side is picked up by the tick notification bubble
 }
+
 
 /* ============================================================
    HOST · REVIEW — iOS Photos-style multi-select
@@ -1484,7 +1486,7 @@ let recapTimer = null, recapRaf = 0;
 let audioCtx = null, arpTimer = null, recapMuted = false;
 
 function recapLimit() {
-  return recapCfg.sec <= 15 ? 8 : 14;
+  return recapCfg.sec <= 15 ? 10 : 15;
 }
 function recapMoments() {
   const visible = S.moments.filter((m) => !m.removed);
@@ -1944,8 +1946,16 @@ function stopCam() {
   disableDemoCam();
 }
 
+function captureOwnerId() {
+  return S.role === "host" ? "host" : "you";
+}
+function captureOwnerName() {
+  if (S.role === "host") return "Host";
+  return S.you.name || "You";
+}
 function myMoments() {
-  return S.moments.filter((m) => m.guestId === "you");
+  const owner = captureOwnerId();
+  return S.moments.filter((m) => m.guestId === owner);
 }
 
 function updateCamera() {
@@ -2061,7 +2071,7 @@ function fireFlash() {
 }
 
 function whoName() {
-  return S.you.name || (S.role === "host" ? "Host" : "You");
+  return captureOwnerName();
 }
 
 function takePhoto() {
@@ -2074,7 +2084,7 @@ function takePhoto() {
   setTimeout(() => {
     const ts = Date.now();
     const frame = captureRaw(s.src, s.w, s.h, 840, 1120, s.mirror, 0.82);
-    addMoment({ id: uid(), guestId: "you", name: whoName(), kind: "photo", ts, frames: [frame], removed: false });
+    addMoment({ id: uid(), guestId: captureOwnerId(), name: whoName(), kind: "photo", ts, frames: [frame], removed: false });
     cam.busy = false;
   }, 120);
 }
@@ -2119,7 +2129,7 @@ function finishVideo() {
   if (f.length) {
     // bake a boomerang: forward then back, so a plain forward loop ping-pongs
     const boomer = f.length > 2 ? f.concat(f.slice(1, f.length - 1).reverse()) : f.slice();
-    addMoment({ id: uid(), guestId: "you", name: whoName(), kind: "clip", ts: recTs, frames: boomer, removed: false });
+    addMoment({ id: uid(), guestId: captureOwnerId(), name: whoName(), kind: "clip", ts: recTs, frames: boomer, removed: false });
   }
   updateCamera();
 }
@@ -2284,6 +2294,10 @@ function renderAlbum() {
   const cover = $("#al-cover");
   if (coverSrc) { cover.style.backgroundImage = `url(${coverSrc})`; cover.classList.add("has-img"); }
   else { cover.style.backgroundImage = ""; cover.classList.remove("has-img"); }
+  const accent = (e.invite && e.invite.accent) || "#F8F6F0";
+  const albumScreen = $("#s-album");
+  albumScreen.style.setProperty("--album-accent", hexA(accent, 0.16));
+  albumScreen.style.setProperty("--album-accent-solid", accent);
   $("#al-message").textContent = e.hostMessage || "Thanks for an amazing night.";
   $("#al-cta").textContent = e.albumCtaLabel || "Next Event";
   const visible = S.moments.filter((m) => !m.removed);
@@ -2324,6 +2338,17 @@ function renderAlbum() {
     fig.addEventListener("click", () => openLightbox(m));
     list.appendChild(fig);
   });
+}
+
+function renderAlbumSent() {
+  const summary = deliverySummary();
+  const sub = $("#sent-sub");
+  if (sub) sub.textContent = summary.total ? "Sent to " + summary.total + " guests. You can still share the album link manually." : "Album is ready. You can share the link manually.";
+}
+function bindAlbumSent() {
+  $("#sent-open").addEventListener("click", () => go("s-album"));
+  $("#sent-copy").addEventListener("click", () => copyText(inviteUrl()));
+  $("#sent-share").addEventListener("click", () => shareEventLink("Open the album"));
 }
 
 function bindAlbum() {
@@ -2474,6 +2499,7 @@ function boot() {
   bindLightbox();
   bindRecap();
   bindAlbum();
+  bindAlbumSent();
   bindAlbumPreview();
   updatePkgBtn();
 

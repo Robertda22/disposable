@@ -2362,3 +2362,96 @@ body::after {
   position: static;
   margin: 24px 0 28px;
 }
+
+
+/* compact share + sent screen pass */
+.album-share-card {
+  justify-content: flex-end;
+  gap: 8px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: -2px 0 14px;
+  background: transparent;
+}
+.album-share-card .mini-action,
+.sent-actions .mini-action,
+.recap-share-icon {
+  min-width: 64px;
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 0 13px;
+  font: 800 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.album-share-card .mini-action {
+  background: rgba(255,255,255,0.62);
+  border-color: var(--ink-12);
+  color: var(--ink);
+}
+.album-share-card #al-home { margin-right: auto; }
+#s-album.light {
+  background:
+    radial-gradient(circle at 50% -8%, var(--album-accent, rgba(248,246,240,0.16)), transparent 42%),
+    var(--paper);
+}
+.album-hero::after {
+  background: linear-gradient(180deg, rgba(15,13,9,0.08), rgba(15,13,9,0.78));
+}
+.album-list.grid .polaroid::after,
+#pv-list.grid .polaroid::after,
+#cf-list.grid .polaroid::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: var(--album-accent-solid, transparent);
+  opacity: 0.72;
+}
+.recap-export-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.recap-share-icon {
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: var(--paper);
+  backdrop-filter: blur(16px);
+  cursor: pointer;
+}
+.recap-share-icon.primary {
+  background: rgba(255,255,255,0.9);
+  color: var(--ink);
+  border-color: rgba(255,255,255,0.54);
+}
+.recap-helper { opacity: 0.76; }
+.sent-pad {
+  min-height: 100%;
+  background: radial-gradient(circle at 50% 28%, rgba(255,255,255,0.12), transparent 42%);
+}
+.sent-mark {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--paper-24);
+  background: rgba(255,255,255,0.08);
+  color: var(--paper);
+  font-size: 42px;
+  margin: 0 auto 24px;
+  box-shadow: 0 24px 90px rgba(0,0,0,0.4);
+}
+.sent-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+.sent-actions .mini-action {
+  color: var(--paper);
+  border-color: var(--paper-24);
+  background: rgba(255,255,255,0.06);
+}
