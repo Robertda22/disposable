@@ -2719,3 +2719,58 @@ body::after {
   .type-title { font-size: 19px; }
   .type-copy { font-size: 11px; }
 }
+
+/* Minimal event type picker override */
+#s-host-type .screen-pad { padding-top: clamp(34px, 7vh, 58px); }
+#s-host-type .h1 { margin-bottom: 24px; }
+#s-host-type .sub { display: none; }
+.event-type-grid {
+  gap: 8px;
+  margin: 4px 0 18px;
+}
+.event-type-card {
+  min-height: 96px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.type-mark {
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  margin-bottom: 10px;
+  background: transparent;
+  color: var(--ink-35);
+  font-size: 9px;
+}
+.type-title {
+  font-size: 19px;
+  letter-spacing: -0.035em;
+}
+.type-copy { display: none; }
+.event-type-card:has(input:checked) {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  transform: none;
+  box-shadow: 0 14px 32px rgba(15, 13, 9, 0.14);
+}
+.event-type-card:has(input:checked)::after {
+  top: 10px;
+  right: 12px;
+  font-size: 15px;
+}
+.event-type-card:has(input:checked) .type-mark {
+  background: transparent;
+  color: var(--paper-60);
+  border-color: transparent;
+}
+@media (max-width: 380px) {
+  .event-type-card { min-height: 86px; padding: 12px; }
+  .type-title { font-size: 17px; }
+}
