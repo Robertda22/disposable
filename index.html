@@ -39,10 +39,31 @@
     </div>
   </section>
 
+  <!-- ============ HOST · EVENT TYPE ============ -->
+  <section class="screen light" id="s-host-type">
+    <div class="screen-pad">
+      <p class="eyebrow">EVENT TYPE · STEP 1 OF 7</p>
+      <h1 class="h1">Pick your<br/><em>event</em></h1>
+      <p class="sub">Choose the closest match. You can still name it whatever you want.</p>
+
+      <div class="event-type-grid" id="event-type-cards" role="radiogroup" aria-label="Event type">
+        <label class="event-type-card"><input type="radio" name="eventType" value="birthday" checked /><span class="type-mark">BD</span><span class="type-title">Birthday</span><span class="type-copy">Party, dinner or house gathering</span></label>
+        <label class="event-type-card"><input type="radio" name="eventType" value="wedding" /><span class="type-mark">WD</span><span class="type-title">Wedding</span><span class="type-copy">Ceremony, reception or afterparty</span></label>
+        <label class="event-type-card"><input type="radio" name="eventType" value="afterwork" /><span class="type-mark">AW</span><span class="type-title">After work</span><span class="type-copy">Team drinks or office night</span></label>
+        <label class="event-type-card"><input type="radio" name="eventType" value="club" /><span class="type-mark">CL</span><span class="type-title">Club night</span><span class="type-copy">DJ, bar or late event</span></label>
+        <label class="event-type-card"><input type="radio" name="eventType" value="dinner" /><span class="type-mark">DN</span><span class="type-title">Dinner</span><span class="type-copy">Table, friends and speeches</span></label>
+        <label class="event-type-card"><input type="radio" name="eventType" value="graduation" /><span class="type-mark">GR</span><span class="type-title">Graduation</span><span class="type-copy">School, family or celebration</span></label>
+      </div>
+
+      <button class="btn solid wide" id="btn-type-continue">Continue →</button>
+    </div>
+  </section>
+
   <!-- ============ HOST · CREATE ============ -->
   <section class="screen light" id="s-host-create">
     <div class="screen-pad">
-      <p class="eyebrow">NEW EVENT · STEP 1 OF 6</p>
+      <button class="back" data-back="s-host-type">←</button>
+      <p class="eyebrow">EVENT DETAILS · STEP 2 OF 7</p>
       <h1 class="h1">Create your<br/><em>event</em></h1>
 
       <form id="form-create" novalidate>
@@ -83,7 +104,7 @@
   <section class="screen light" id="s-host-unlock">
     <div class="screen-pad">
       <button class="back" data-back="s-host-create">←</button>
-      <p class="eyebrow">REVEAL SAFETY · STEP 2 OF 6</p>
+      <p class="eyebrow">REVEAL SAFETY · STEP 3 OF 7</p>
       <h1 class="h1">When should we<br/><em>remind you?</em></h1>
       <p class="sub">Guests never see the album until you review and approve it.</p>
 
@@ -117,7 +138,7 @@
   <section class="screen light" id="s-host-package">
     <div class="screen-pad">
       <button class="back" data-back="s-host-unlock">←</button>
-      <p class="eyebrow">GUEST PACKAGE · STEP 3 OF 6</p>
+      <p class="eyebrow">GUEST PACKAGE · STEP 4 OF 7</p>
       <h1 class="h1">How many<br/><em>guests?</em></h1>
 
       <div class="pkg-list" id="pkg-list">
@@ -144,7 +165,7 @@
   <section class="screen light" id="s-host-style">
     <div class="screen-pad">
       <button class="back" data-back="s-host-package">←</button>
-      <p class="eyebrow">CAMERA STYLE · STEP 4 OF 6</p>
+      <p class="eyebrow">CAMERA STYLE · STEP 5 OF 7</p>
       <h1 class="h1">Choose the<br/><em>camera look</em></h1>
       <p class="sub">Everyone at the event uses the same style.</p>
 
@@ -169,7 +190,7 @@
   <section class="screen light" id="s-host-exposures">
     <div class="screen-pad">
       <button class="back" data-back="s-host-style">←</button>
-      <p class="eyebrow">SHOT LIMIT · STEP 5 OF 6</p>
+      <p class="eyebrow">SHOT LIMIT · STEP 6 OF 7</p>
       <h1 class="h1">How many<br/><em>moments?</em></h1>
       <p class="sub">This is the max each guest can capture. Minimum is 5.</p>
 
@@ -190,7 +211,7 @@
   <section class="screen light" id="s-host-share">
     <div class="screen-pad">
       <button class="back" data-back="s-host-exposures">←</button>
-      <p class="eyebrow">STEP 6 OF 6 · YOUR INVITE</p>
+      <p class="eyebrow">STEP 7 OF 7 · YOUR INVITE</p>
       <h1 class="h1">Your<br/><em>invite</em></h1>
       <p class="sub">This is what guests see when you share the event.</p>
 

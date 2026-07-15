@@ -77,7 +77,7 @@ const ROLE_KEY = "disposable_proto_role"; // per-tab, so one tab can be host and
 function initialState() {
   return {
     role: null,
-    event: null,          // {name, cover, start, end, unlock, revealAt, cameraStyle, pkg, max, code, shared, revealed, revealedAt, createdAt}
+    event: null,          // {eventType, name, cover, start, end, unlock, revealAt, cameraStyle, pkg, max, code, shared, revealed, revealedAt, createdAt}
     guests: [],           // {id, name, sim}
     moments: [],          // {id, guestId, name, kind, ts, removed, sim, seed | frames[]}
     you: { joined: false },
@@ -216,7 +216,7 @@ let confirmAlbumView = "grid";
 function screenForRole(role) {
   const e = S.event;
   if (role === "host") {
-    if (!e) return "s-host-create";
+    if (!e) return "s-host-type";
     if (e.revealed) return "s-album";
     if (!e.shared) return "s-host-share";
     return "s-host-dash";
@@ -229,7 +229,9 @@ function screenForRole(role) {
 }
 
 const enterHooks = {
+  "s-host-type": renderEventType,
   "s-host-create": renderCreate,
+  "s-host-package": renderPackage,
   "s-host-unlock": renderUnlock,
   "s-host-style": renderStyle,
   "s-host-exposures": renderExposures,
@@ -305,11 +307,46 @@ function openPay({ title, eyebrow, price, onDone }) {
 /* ============================================================
    HOST · CREATE
    ============================================================ */
+const EVENT_TYPES = {
+  birthday: { label: "Birthday", placeholder: "Bert birthday" },
+  wedding: { label: "Wedding", placeholder: "Elsa & Hugo wedding" },
+  afterwork: { label: "After work", placeholder: "Friday after work" },
+  club: { label: "Club night", placeholder: "Club night" },
+  dinner: { label: "Dinner", placeholder: "Summer dinner" },
+  graduation: { label: "Graduation", placeholder: "Graduation night" },
+};
+
+function currentEventType() {
+  return draft?.eventType || "birthday";
+}
+
+function renderEventType() {
+  const chosen = currentEventType();
+  const radio = document.querySelector(`input[name="eventType"][value="${chosen}"]`);
+  if (radio) radio.checked = true;
+}
+
+function bindEventType() {
+  const cards = $("#event-type-cards");
+  if (!cards) return;
+  cards.addEventListener("change", () => {
+    const type = document.querySelector('input[name="eventType"]:checked')?.value || "birthday";
+    draft = { ...(draft || {}), eventType: type };
+  });
+  $("#btn-type-continue").addEventListener("click", () => {
+    const type = document.querySelector('input[name="eventType"]:checked')?.value || "birthday";
+    draft = { ...(draft || {}), eventType: type };
+    go("s-host-create");
+  });
+}
+
 function renderCreate() {
   const now = Date.now();
   if (!$("#in-date").value) $("#in-date").value = toLocalDate(now);
   if (!$("#in-start").value) $("#in-start").value = toLocalTime(now);
   if (!$("#in-end").value) $("#in-end").value = toLocalTime(now + 3 * 3600e3);
+  const type = EVENT_TYPES[currentEventType()] || EVENT_TYPES.birthday;
+  $("#in-name").placeholder = type.placeholder;
   updateOvernightHint();
 }
 
@@ -364,7 +401,7 @@ function bindCreate() {
     if (!ok) return;
 
     // keep any unlock choice already made if the host went back and forth
-    draft = { ...(draft || {}), name, cover: coverData, start, end };
+    draft = { ...(draft || {}), eventType: currentEventType(), name, cover: coverData, start, end };
     if (!draft.unlock) draft.unlock = "end";
     go("s-host-unlock");
   });
@@ -378,7 +415,7 @@ function err(input) {
    HOST · ALBUM UNLOCK (its own step)
    ============================================================ */
 function renderUnlock() {
-  if (!draft) { go("s-host-create"); return; }
+  if (!draft) { go("s-host-type"); return; }
   const chosen = draft.unlock || "end";
   const radio = document.querySelector(`input[name="unlock"][value="${chosen}"]`);
   if (radio) radio.checked = true;
@@ -396,7 +433,7 @@ function syncRevealField() {
 function bindUnlock() {
   $("#unlock-cards").addEventListener("change", syncRevealField);
   $("#btn-unlock-continue").addEventListener("click", () => {
-    if (!draft) { go("s-host-create"); return; }
+    if (!draft) { go("s-host-type"); return; }
     const unlock = document.querySelector('input[name="unlock"]:checked').value;
     draft.unlock = unlock;
     draft.revealAt = unlock === "time"
@@ -409,10 +446,14 @@ function bindUnlock() {
 /* ============================================================
    HOST · PACKAGE
    ============================================================ */
+function renderPackage() {
+  if (!draft) { go("s-host-type"); return; }
+}
+
 function bindPackage() {
   $("#pkg-list").addEventListener("change", updatePkgBtn);
   $("#btn-pkg-continue").addEventListener("click", () => {
-    if (!draft) { go("s-host-create"); return; }
+    if (!draft) { go("s-host-type"); return; }
     const key = document.querySelector('input[name="pkg"]:checked').value;
     const pkg = PKGS[key];
     draft.pkg = key;
@@ -429,7 +470,7 @@ function updatePkgBtn() {
 }
 
 function renderStyle() {
-  if (!draft) { go("s-host-create"); return; }
+  if (!draft) { go("s-host-type"); return; }
   const chosen = draft.cameraStyle || "vintage";
   const radio = document.querySelector('input[name="cameraStyle"][value="' + chosen + '"]');
   if (radio) radio.checked = true;
@@ -440,7 +481,7 @@ function bindStyle() {
     draft.cameraStyle = document.querySelector('input[name="cameraStyle"]:checked').value;
   });
   $("#btn-style-continue").addEventListener("click", () => {
-    if (!draft) { go("s-host-create"); return; }
+    if (!draft) { go("s-host-type"); return; }
     draft.cameraStyle = document.querySelector('input[name="cameraStyle"]:checked').value;
     if (!draft.exposures) draft.exposures = DEFAULT_EXPOSURES;
     go("s-host-exposures");
@@ -463,7 +504,7 @@ function setExposureDraft(value) {
   if (note) note.textContent = meta.label + " · " + meta.note;
 }
 function renderExposures() {
-  if (!draft) { go("s-host-create"); return; }
+  if (!draft) { go("s-host-type"); return; }
   const chosen = String(draft.exposures || DEFAULT_EXPOSURES);
   const radio = document.querySelector('input[name="exposures"][value="' + chosen + '"]');
   if (radio) {
@@ -479,7 +520,7 @@ function bindExposures() {
     setExposureDraft(val);
   });
   $("#btn-exposure-continue").addEventListener("click", () => {
-    if (!draft) { go("s-host-create"); return; }
+    if (!draft) { go("s-host-type"); return; }
     const val = document.querySelector('input[name="exposures"]:checked').value;
     setExposureDraft(val);
     const exposurePrice = draft.exposurePrice || 0;
@@ -2493,6 +2534,7 @@ function bindChrome() {
 
 function boot() {
   bindChrome();
+  bindEventType();
   bindCreate();
   bindUnlock();
   bindPackage();
