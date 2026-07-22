@@ -2579,3 +2579,11 @@ function boot() {
 }
 
 boot();
+
+// Keep the installed iPhone web app current while still providing a basic
+// offline shell. Service workers require HTTPS (or localhost).
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}

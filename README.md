@@ -1,6 +1,12 @@
 # Disposable
 
-Disposable is a local static prototype for an event camera app.
+Disposable is an event camera prototype moving toward a shared, installable
+web app for iPhone hosts and browser-based guests.
+
+The production direction is one installable iPhone web app for hosts and the
+same hosted website for guests joining by QR. See
+`docs/PRODUCT_ARCHITECTURE.md`. The unrelated Swift arcade-game documents in
+the old `Portfolio/disposable` folder are obsolete and must not guide this app.
 
 ## App Location
 
@@ -18,6 +24,14 @@ python3 -m http.server 4173
 
 Open:
 `http://localhost:4173/`
+
+Install on iPhone after deployment:
+1. Open the HTTPS app URL in Safari.
+2. Tap Share.
+3. Tap Add to Home Screen, then Open as Web App.
+
+The manifest, app icons, service worker, and Vercel routing needed for this are
+already included in the repository.
 
 ## Current Prototype Flow
 
@@ -83,15 +97,21 @@ Scheduled reveal time is only a reminder, not automatic reveal.
 
 Production readiness map: `PRODUCTION_READINESS.md`
 
+Current architecture and corrected product direction:
+`docs/PRODUCT_ARCHITECTURE.md`
+
+First-pass Supabase schema:
+`supabase/schema.sql`
+
 The app now creates a local reveal delivery manifest when the host approves the album. This is still fake sending, but it gives the future backend/email worker a clear contract to replace.
 
 ## Next Build Tasks
 
-1. Improve album preview controls: CTA link placeholder, clearer included/removed/favorite state.
-2. Make host review easier: tabs for Included, Removed, Favorites.
-3. Add dev/test controls for forcing live, ended, and revealed states.
-4. Replace the local delivery manifest with real email/SMS sending.
-5. Later: real backend, auth, storage, moderation, payments, and deployment.
+1. Create a Supabase project and apply `supabase/schema.sql`.
+2. Replace local event, guest, and capture state with Supabase reads and writes.
+3. Upload captures to the private `event-media` bucket.
+4. Test one host plus several real guest phones through the deployed QR route.
+5. Add email/SMS delivery only after the shared event flow is stable.
 
 ## Git Habit
 
