@@ -492,8 +492,8 @@
   <section class="screen light" id="s-guest-full">
     <div class="screen-pad centered">
       <p class="big-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></p>
-      <h1 class="h1 center">This event is<br/><em>currently full</em></h1>
-      <p class="sub center">The host can make room for you.</p>
+      <h1 class="h1 center" id="guest-wait-title">Request<br/><em>pending</em></h1>
+      <p class="sub center" id="guest-wait-sub">The host will let you in.</p>
       <button class="btn solid" id="btn-request">Request access</button>
     </div>
   </section>
@@ -742,6 +742,10 @@
 
 <div id="toasts"></div>
 
+<script src="/assets/vendor-supabase.js"></script>
+<script src="/assets/vendor-qrcode.js"></script>
+<script src="/supabase-config.js"></script>
+<script src="/supabase-backend.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

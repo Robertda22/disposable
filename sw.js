@@ -1,9 +1,13 @@
-const CACHE = "disposable-shell-v1";
+const CACHE = "disposable-shell-v3";
 const SHELL = [
   "/",
   "/index.html",
   "/styles.css",
   "/app.js",
+  "/supabase-config.js",
+  "/supabase-backend.js",
+  "/assets/vendor-supabase.js",
+  "/assets/vendor-qrcode.js",
   "/manifest.webmanifest",
   "/assets/icon.svg",
   "/assets/icon-192.png",

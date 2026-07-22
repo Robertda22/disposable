@@ -74,24 +74,26 @@ Scheduled reveal time is only a reminder, not automatic reveal.
 ## What Is Real
 
 - Frontend flows.
-- Local event state.
-- Local guest/host role switching.
+- Supabase anonymous sessions for each browser/device.
+- Shared events and guest requests in the Supabase database.
+- Host approval of guest requests across devices (3-second polling).
+- Private capture uploads in the Supabase `event-media` bucket.
+- Host moderation and manual album reveal state shared across devices.
+- Real event URLs and scannable QR codes using `/e/CODE` routes.
+- Local state remains as an offline/demo fallback.
 - Camera/demo camera capture.
-- Local photo/video moment storage in browser storage.
 - Invite customization prototype.
 - Host review and album preview prototype, including early preview/send for testing.
 - Guest waiting and album-ready states.
 
-## What Is Fake / Local
+## What Is Still Prototype-Only
 
-- Data is only localStorage.
-- No real database.
-- No real authentication.
-- No real file/photo cloud storage.
+- Host identity uses an anonymous browser session, not a recoverable account.
 - No real email or SMS sending.
 - Payments are demo only.
-- Invite links and QR codes are prototype-only.
 - Recap film is client-side prototype, not AI-generated video.
+- Video captures currently upload their first frame as a still image.
+- The app polls Supabase; realtime subscriptions are not wired yet.
 
 ## Production Handoff
 
@@ -100,18 +102,25 @@ Production readiness map: `PRODUCTION_READINESS.md`
 Current architecture and corrected product direction:
 `docs/PRODUCT_ARCHITECTURE.md`
 
-First-pass Supabase schema:
+Supabase schema:
 `supabase/schema.sql`
+
+The browser connection uses the public publishable key in
+`supabase-config.js`. Never put a Supabase secret or service-role key in this
+repository.
+
+If the schema was installed before 22 July 2026, run
+`supabase/fix-join-event.sql` once in the Supabase SQL Editor.
 
 The app now creates a local reveal delivery manifest when the host approves the album. This is still fake sending, but it gives the future backend/email worker a clear contract to replace.
 
 ## Next Build Tasks
 
-1. Create a Supabase project and apply `supabase/schema.sql`.
-2. Replace local event, guest, and capture state with Supabase reads and writes.
-3. Upload captures to the private `event-media` bucket.
-4. Test one host plus several real guest phones through the deployed QR route.
-5. Add email/SMS delivery only after the shared event flow is stable.
+1. Run `supabase/fix-join-event.sql` in the existing Supabase project.
+2. Test one host plus several real guest phones through the deployed QR route.
+3. Add a recoverable host login before external client use.
+4. Add email/SMS delivery only after the shared event flow is stable.
+5. Replace first-frame clip uploads with real compressed video uploads.
 
 ## Git Habit
 

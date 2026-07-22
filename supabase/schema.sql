@@ -184,7 +184,7 @@ begin
 
   if target.id is null then raise exception 'Event not found'; end if;
   if target.status <> 'live' then raise exception 'Capture is closed'; end if;
-  if (select count(*) from public.guests where public.guests.event_id = target.id and status in ('pending', 'approved')) >= target.guest_capacity then
+  if (select count(*) from public.guests g where g.event_id = target.id and g.status in ('pending', 'approved')) >= target.guest_capacity then
     raise exception 'Event is full';
   end if;
 

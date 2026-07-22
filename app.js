@@ -73,6 +73,9 @@ function toLocalTime(ts) {
 /* ---------- store ---------- */
 const KEY = "disposable_proto_v1";
 const ROLE_KEY = "disposable_proto_role"; // per-tab, so one tab can be host and another guest
+const BACKEND = window.DisposableBackend || null;
+let remoteCreatePromise = null;
+let remoteBusy = false;
 
 function initialState() {
   return {
@@ -80,7 +83,8 @@ function initialState() {
     event: null,          // {eventType, name, cover, start, end, unlock, revealAt, cameraStyle, pkg, max, code, shared, revealed, revealedAt, createdAt}
     guests: [],           // {id, name, sim}
     moments: [],          // {id, guestId, name, kind, ts, removed, sim, seed | frames[]}
-    you: { joined: false },
+    you: { joined: false, requested: false, remoteGuestId: null },
+    remoteRequests: [],
     simRequest: null,     // scripted request {name}
     request: null,        // real guest request {name, contact}
     deliveries: [],      // prototype reveal delivery manifest {guestId, name, contact, channel, status, sentAt}
@@ -243,6 +247,7 @@ const enterHooks = {
   "s-album-confirm": renderAlbumConfirm,
   "s-album-sent": renderAlbumSent,
   "s-guest-join": renderJoin,
+  "s-guest-full": renderGuestWait,
   "s-guest-main": renderGuestMain,
   "s-album": renderAlbum,
 };
@@ -275,6 +280,12 @@ function toast(msg) {
   const t = el("div", "toast", msg);
   $("#toasts").appendChild(t);
   setTimeout(() => t.remove(), 3000);
+}
+
+function inviteUrl(code = S.event?.code) {
+  if (!code) return location.href;
+  if (location.protocol === "file:") return `https://disposable-seven.vercel.app/e/${code}`;
+  return `${location.origin}/e/${code}`;
 }
 function flashFx() {
   const f = $("#flash-fx");
@@ -545,6 +556,7 @@ function bindExposures() {
       delete S.event.exposurePrice;
       delete S.event.exposureLabel;
       save();
+      ensureRemoteEvent();
       if (totalPrice > 0) toast("✓ PAID " + totalPrice + " SEK — EVENT CREATED");
       go("s-host-share");
     };
@@ -726,6 +738,41 @@ function drawInvite() {
 }
 
 function drawQR(canvas, code, light = "#F3EEE4", dark = "#17140F") {
+  if (window.QRCode?.toCanvas) {
+    window.QRCode.toCanvas(canvas, inviteUrl(code), {
+      width: 290,
+      margin: 2,
+      color: { light, dark },
+      errorCorrectionLevel: "M",
+    }, () => {});
+    return;
+  }
+  if (typeof window.qrcode === "function") {
+    const qr = window.qrcode(0, "M");
+    qr.addData(inviteUrl(code));
+    qr.make();
+    const modules = qr.getModuleCount();
+    const margin = 2;
+    const size = 290;
+    const scale = size / (modules + margin * 2);
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = light;
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = dark;
+    for (let row = 0; row < modules; row++) {
+      for (let col = 0; col < modules; col++) {
+        if (!qr.isDark(row, col)) continue;
+        const left = Math.floor((col + margin) * scale);
+        const top = Math.floor((row + margin) * scale);
+        const right = Math.ceil((col + margin + 1) * scale);
+        const bottom = Math.ceil((row + margin + 1) * scale);
+        ctx.fillRect(left, top, right - left, bottom - top);
+      }
+    }
+    return;
+  }
   const cells = 29, px = 10; // 25 modules + 2 quiet each side
   canvas.width = cells * px; canvas.height = cells * px;
   const ctx = canvas.getContext("2d");
@@ -917,10 +964,20 @@ function bindShare() {
   ["#btn-open-dash", "#btn-open-dash-edit"].forEach((sel) => {
     const btn = $(sel);
     if (!btn) return;
-    btn.addEventListener("click", () => {
-      S.event.shared = true;
-      save();
-      go("s-host-dash");
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        await ensureRemoteEvent();
+        if (BACKEND && S.event.remoteId) S.event = await BACKEND.publishEvent(S.event);
+        S.event.shared = true;
+        save();
+        go("s-host-dash");
+      } catch (error) {
+        console.error(error);
+        toast("COULD NOT PUBLISH — CHECK CONNECTION");
+      } finally {
+        btn.disabled = false;
+      }
     });
   });
 }
@@ -1044,6 +1101,7 @@ function renderRequests() {
   const reqs = [];
   if (S.simRequest) reqs.push({ ...S.simRequest, kind: "sim" });
   if (S.request) reqs.push({ ...S.request, kind: "real" });
+  (S.remoteRequests || []).forEach((request) => reqs.push({ ...request, kind: "remote" }));
   const badge = $("#request-badge");
   if (badge) { badge.hidden = !reqs.length; badge.textContent = reqs.length > 99 ? "99+" : String(reqs.length); }
   if (!reqs.length) return;
@@ -1060,8 +1118,13 @@ function renderRequests() {
 
   const acc = el("button", "rq-accept", "Accept");
   const dec = el("button", "rq-decline", "×");
-  acc.addEventListener("click", () => acceptRequest(rq.kind));
-  dec.addEventListener("click", () => {
+  acc.addEventListener("click", () => acceptRequest(rq.kind, rq));
+  dec.addEventListener("click", async () => {
+    if (rq.kind === "remote") {
+      try { await BACKEND.setGuestStatus(rq.id, "declined"); await pollRemote(); }
+      catch (error) { console.error(error); toast("COULD NOT DECLINE REQUEST"); }
+      return;
+    }
     if (rq.kind === "sim") S.simRequest = null;
     else { S.request = null; S.you.requested = false; }
     save();
@@ -1075,7 +1138,13 @@ function renderRequests() {
   slot.appendChild(wrap);
 }
 
-function acceptRequest(kind) {
+function acceptRequest(kind, request) {
+  if (kind === "remote") {
+    BACKEND.setGuestStatus(request.id, "approved")
+      .then(() => { toast(`✓ ${request.name.toUpperCase()} JOINED`); return pollRemote(); })
+      .catch((error) => { console.error(error); toast("COULD NOT ACCEPT REQUEST"); });
+    return;
+  }
   const doAccept = () => {
     if (kind === "sim") {
       S.guests.push({ id: uid(), name: S.simRequest.name, sim: true });
@@ -1206,6 +1275,12 @@ function doReveal() {
   e.deliveryStatus = "prototype_sent";
   S.deliveries = buildDeliveryManifest();
   save();
+  if (BACKEND && e.remoteId) {
+    BACKEND.reveal(e).catch((error) => {
+      console.error(error);
+      toast("ALBUM SAVED LOCALLY — CLOUD REVEAL FAILED");
+    });
+  }
   if (S.role === "host") go("s-album-sent");
   // guest side is picked up by the tick notification bubble
 }
@@ -1340,8 +1415,10 @@ function toggleSel(id, item) {
 function applyToSelected(fn, word) {
   if (!reviewSel.size) return;
   const n = reviewSel.size;
-  S.moments.forEach((m) => { if (reviewSel.has(m.id)) fn(m); });
+  const changed = S.moments.filter((m) => reviewSel.has(m.id));
+  changed.forEach(fn);
   save();
+  if (BACKEND) changed.forEach((m) => BACKEND.updateMoment(m).catch(console.error));
   reviewSel.clear();
   renderReview();
   toast(`${n} ${word}`);
@@ -1790,7 +1867,7 @@ function renderJoin() {
 }
 
 function bindJoin() {
-  $("#form-join").addEventListener("submit", (e) => {
+  $("#form-join").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = $("#jn-name").value.trim();
     const contact = $("#jn-contact").value.trim();
@@ -1799,6 +1876,31 @@ function bindJoin() {
     if (!contact) { err($("#jn-contact")); ok = false; }
     if (!ok) return;
     S.you = { ...S.you, name, contact };
+    if (BACKEND && S.event.remoteId) {
+      const submit = e.submitter;
+      if (submit) submit.disabled = true;
+      try {
+        const joined = await BACKEND.joinEvent(S.event.code, name, contact);
+        if (!joined) throw new Error("No guest record returned");
+        S.you.remoteGuestId = joined.guest_id;
+        S.you.requested = joined.join_status !== "approved";
+        S.you.joined = joined.join_status === "approved";
+        S.you.remoteFull = false;
+        save();
+        go(S.you.joined ? "s-guest-main" : "s-guest-full");
+        toast(S.you.joined ? `WELCOME, ${name.toUpperCase()}` : "REQUEST SENT TO THE HOST");
+      } catch (error) {
+        console.error(error);
+        const full = /full/i.test(error.message);
+        S.you.remoteFull = full;
+        save();
+        if (full) go("s-guest-full");
+        else toast("COULD NOT JOIN — TRY AGAIN");
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+      return;
+    }
     if (S.event.revealed) {
       S.you.joined = true;
       if (!S.guests.find((g) => g.id === "you")) S.guests.push({ id: "you", name, contact });
@@ -1827,6 +1929,15 @@ function bindJoin() {
     btn.disabled = true;
     toast("REQUEST SENT TO THE HOST");
   });
+}
+
+function renderGuestWait() {
+  const full = !!S.you.remoteFull;
+  $("#guest-wait-title").innerHTML = full ? "This event is<br/><em>currently full</em>" : "Request<br/><em>pending</em>";
+  $("#guest-wait-sub").textContent = full ? "The host can make room for you." : "The host will let you in.";
+  const button = $("#btn-request");
+  button.textContent = full ? "Event full" : "Request sent ✓";
+  button.disabled = true;
 }
 
 /* ============================================================
@@ -2092,6 +2203,17 @@ function addMoment(m) {
   save();
   updateThumb();
   updateCamera();
+  if (BACKEND && S.event?.remoteId) {
+    const guestId = S.role === "host" ? null : S.you.remoteGuestId;
+    BACKEND.uploadMoment(S.event, guestId, m).then((remoteId) => {
+      m.remoteId = remoteId;
+      m.remote = true;
+      save();
+    }).catch((error) => {
+      console.error(error);
+      toast("CAPTURE KEPT ON THIS PHONE — UPLOAD FAILED");
+    });
+  }
 }
 
 function setCamMode(mode) {
@@ -2428,6 +2550,7 @@ function bindAlbum() {
    ============================================================ */
 function simTick() {
   const e = S.event;
+  if (e?.remoteId) return;
   if (!e || e.revealed) return;
   const now = Date.now();
   if (now < e.start || now > e.end) return;
@@ -2532,7 +2655,87 @@ function bindChrome() {
   });
 }
 
-function boot() {
+async function ensureRemoteEvent() {
+  if (!BACKEND || !S.event || S.event.remoteId) return S.event;
+  if (!remoteCreatePromise) {
+    remoteCreatePromise = BACKEND.createEvent(S.event).then((event) => {
+      S.event = { ...S.event, ...event };
+      save();
+      return S.event;
+    }).catch((error) => {
+      remoteCreatePromise = null;
+      throw error;
+    });
+  }
+  return remoteCreatePromise;
+}
+
+function mergeRemote(snapshot) {
+  if (!snapshot) return;
+  if (snapshot.event) S.event = { ...S.event, ...snapshot.event };
+  if (S.role === "host") {
+    const allGuests = snapshot.guests || [];
+    S.remoteRequests = allGuests.filter((g) => g.status === "pending");
+    S.guests = allGuests.filter((g) => g.status === "approved");
+  } else if (snapshot.guest) {
+    S.you.remoteGuestId = snapshot.guest.id;
+    S.you.requested = snapshot.guest.status === "pending";
+    S.you.joined = snapshot.guest.status === "approved";
+    if (S.you.joined) S.guests = snapshot.guests || S.guests;
+  }
+  if (snapshot.moments) {
+    const pending = S.moments.filter((m) => !m.remote);
+    S.moments = [...snapshot.moments, ...pending];
+  }
+  save();
+}
+
+async function pollRemote() {
+  if (!BACKEND || remoteBusy || !S.event?.remoteId) return;
+  remoteBusy = true;
+  try {
+    const snapshot = S.role === "host"
+      ? await BACKEND.loadHost(S.event.remoteId)
+      : await BACKEND.loadGuest(S.event.remoteId);
+    mergeRemote(snapshot);
+    const target = screenForRole(S.role);
+    if (S.role === "guest" && currentScreen === "s-guest-full" && target !== currentScreen) go(target);
+    else refreshActive();
+  } catch (error) {
+    console.error("Supabase sync", error);
+  } finally {
+    remoteBusy = false;
+  }
+}
+
+async function initRemote() {
+  if (!BACKEND) return;
+  try {
+    await BACKEND.init();
+    const code = BACKEND.routeCode();
+    if (code) {
+      const event = await BACKEND.previewEvent(code);
+      if (!event) throw new Error("Event not found");
+      const changingEvent = S.event?.code !== code;
+      if (changingEvent) {
+        S.guests = [];
+        S.moments = [];
+        S.you = { joined: false, requested: false, remoteGuestId: null };
+      }
+      S.event = { ...S.event, ...event };
+      S.role = "guest";
+      save();
+      await pollRemote();
+    } else if (S.role === "host" && S.event?.remoteId) {
+      await pollRemote();
+    }
+  } catch (error) {
+    console.error(error);
+    toast("CLOUD OFFLINE — USING THIS DEVICE");
+  }
+}
+
+async function boot() {
   bindChrome();
   bindEventType();
   bindCreate();
@@ -2551,6 +2754,7 @@ function boot() {
   bindAlbumSent();
   bindAlbumPreview();
   updatePkgBtn();
+  await initRemote();
 
   // keep the app vertical — best effort (works in fullscreen / installed PWA)
   try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch {}
@@ -2567,6 +2771,7 @@ function boot() {
   });
 
   setInterval(simTick, 3000);
+  setInterval(pollRemote, 3000);
   setInterval(tick, 1000);
   setInterval(playClips, 130);
 
